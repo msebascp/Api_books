@@ -6,12 +6,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -23,6 +24,21 @@ class User extends Authenticatable
         'email',
         'password',
     ];
+
+    public function read_books()
+    {
+        return $this->belongsToMany(Book::class, 'read_list_user_books', 'user_id', 'book_id');
+    }
+
+    public function collection_books()
+    {
+        return $this->belongsToMany(Book::class, 'collection_list_user_books', 'user_id', 'book_id');
+    }
+
+    public function watch_books()
+    {
+        return $this->belongsToMany(Book::class, 'watch_list_user_books', 'user_id', 'book_id');
+    }
 
     /**
      * The attributes that should be hidden for serialization.

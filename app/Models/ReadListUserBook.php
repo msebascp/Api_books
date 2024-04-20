@@ -8,4 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class ReadListUserBook extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'user_list_id',
+        'book_id',
+    ];
 }

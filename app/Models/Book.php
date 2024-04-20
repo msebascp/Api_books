@@ -21,4 +21,9 @@ class Book extends Model
     {
         return $this->belongsToMany(Category::class);
     }
+
+    public function userLists(): BelongsToMany
+    {
+        return $this->belongsToMany(UserList::class);
+    }
 }

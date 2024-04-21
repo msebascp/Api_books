@@ -40,6 +40,20 @@ class User extends Authenticatable
         return $this->belongsToMany(Book::class, 'watch_list_user_books', 'user_id', 'book_id');
     }
 
+    // Relación de seguidores (usuarios que siguen a este usuario)
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'user_id', 'follower_id')
+            ->withTimestamps();
+    }
+
+    // Relación de usuarios seguidos por este usuario
+    public function following()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'user_id')
+            ->withTimestamps();
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

@@ -25,4 +25,9 @@ class Review extends Model
     {
         return $this->belongsTo(Book::class);
     }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
 }

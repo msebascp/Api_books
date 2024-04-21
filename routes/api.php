@@ -13,10 +13,12 @@ use App\Http\Middleware\IsAdminMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-// Rutas para usuarios autenticados
 Route::middleware('auth:sanctum')->group(function () {
+    Route::controller(AuthController::class)->group(function () {
+        Route::post('/register', 'register')->withoutMiddleware('auth:sanctum');
+        Route::post('/login', 'login')->withoutMiddleware('auth:sanctum');
+        Route::post('/logout', 'logout');
+    });
     Route::controller(AuthorController::class)->group(function () {
         Route::get('/authors', 'index');
         Route::get('/authors/{id}', 'show');
@@ -60,15 +62,6 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::controller(WatchListUserBookController::class)->group(function () {
         Route::post('/books/watch', 'store');
-    });
-    Route::controller(AuthController::class)->group(function () {
-        Route::post('/logout', 'logout');
-    });
-});
-// Rutas para administradores
-Route::middleware(['auth:sanctum', IsAdminMiddleware::class])->group(function () {
-    Route::get('/prueba2', function () {
-        return "hola mundo";
     });
 });
 

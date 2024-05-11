@@ -10,10 +10,11 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('user_lists', function (Blueprint $table) {
+        Schema::create('read_lists', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('name');
+            $table->foreignId("user_id")->constrained()->onDelete("cascade");
+            $table->foreignId("book_id")->constrained()->onDelete("cascade");
+            $table->boolean("is_like")->default(false);
             $table->timestamps();
         });
     }
@@ -23,6 +24,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_lists');
+        Schema::dropIfExists('read_lists');
     }
 };

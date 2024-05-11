@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class CollectionListUserBookController extends Controller
+class ReadListController extends Controller
 {
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $request->validate([
             'user_id' => 'required|integer',
@@ -18,18 +19,18 @@ class CollectionListUserBookController extends Controller
         try {
             $user = User::findOrFail($request->user_id);
             $book = Book::findOrFail($request->book_id);
-            $user->collection_books()->attach($book);
-        } catch (\Exception $e) {
+            $user->read_books()->attach($book);
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error adding book to user collection',
+                'message' => 'Error adding book to user read list',
                 'error' => $e->getMessage()
             ], 500);
         }
-        echo $user->collection_books;
+        echo $user->read_books;
         return response()->json([
             'success' => true,
-            'message' => 'Book added to user collection'
+            'message' => 'Book added to user read list'
         ]);
     }
 }

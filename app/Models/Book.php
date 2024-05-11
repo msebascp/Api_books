@@ -31,4 +31,14 @@ class Book extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    public function readListUserBooks()
+    {
+        return $this->hasMany(ReadListUserBook::class);
+    }
+
+    public function users_read()
+    {
+        return $this->belongsToMany(User::class, 'read_list_user_books', 'book_id', 'user_id');
+    }
 }

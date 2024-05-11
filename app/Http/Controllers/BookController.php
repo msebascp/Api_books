@@ -10,8 +10,16 @@ class BookController extends Controller
 {
     public function index(): JsonResponse
     {
+        $user = auth()->user();
         try {
             $books = Book::with(['authors:id,name', 'categories:id,name'])->get();
+            // Añadir el campo is_read a cada libro
+
+            $books->each(function ($book) use ($user) {
+                $readListUserBook = $book->readListUserBooks->firstWhere('user_id', $user->id);
+                $book->is_read = $readListUserBook !== null;
+                $book->is_like = $readListUserBook ? $readListUserBook->is_like : false;
+            });
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

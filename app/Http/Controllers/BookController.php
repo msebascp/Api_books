@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use App\Models\CollectionList;
+use App\Models\ReadList;
+use App\Models\WatchList;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,13 +16,6 @@ class BookController extends Controller
         $user = auth()->user();
         try {
             $books = Book::with(['authors:id,name', 'categories:id,name'])->get();
-            // Añadir el campo is_read a cada libro
-
-            $books->each(function ($book) use ($user) {
-                $readListUserBook = $book->readListUserBooks->firstWhere('user_id', $user->id);
-                $book->is_read = $readListUserBook !== null;
-                $book->is_like = $readListUserBook ? $readListUserBook->is_like : false;
-            });
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -71,6 +67,25 @@ class BookController extends Controller
                 'success' => false,
                 'message' => 'Book not found'
             ], 404);
+        }
+        if (ReadList::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
+            $book->is_read = true;
+            $is_like = ReadList::where('user_id', auth()->id())->where('book_id', $id)->first()->value('is_like');
+            $book->is_like = boolval($is_like);
+
+        } else {
+            $book->is_read = false;
+            $book->is_like = false;
+        }
+        if (WatchList::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
+            $book->in_watchlist = true;
+        } else {
+            $book->in_watchlist = false;
+        }
+        if (CollectionList::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
+            $book->in_collectionlist = true;
+        } else {
+            $book->in_collectionlist = false;
         }
         return response()->json([
             'success' => true,

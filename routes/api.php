@@ -4,13 +4,11 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\CollectionListUserBookController;
+use App\Http\Controllers\CollectionListController;
 use App\Http\Controllers\CommentController;
-use App\Http\Controllers\ReadListUserBookController;
+use App\Http\Controllers\ReadListController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\WatchListUserBookController;
-use App\Http\Middleware\IsAdminMiddleware;
-use Illuminate\Http\Request;
+use App\Http\Controllers\WatchListController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -18,6 +16,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/register', 'register')->withoutMiddleware('auth:sanctum');
         Route::post('/login', 'login')->withoutMiddleware('auth:sanctum');
         Route::post('/logout', 'logout');
+        Route::get('/check_token', 'checkToken');
     });
     Route::controller(AuthorController::class)->group(function () {
         Route::get('/authors', 'index');
@@ -54,14 +53,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/reviews/{id}', 'update');
         Route::delete('/reviews/{id}', 'destroy');
     });
-    Route::controller(CollectionListUserBookController::class)->group(function () {
-        Route::post('/books/collection', 'store');
+    Route::controller(CollectionListController::class)->group(function () {
+        Route::get('/user/collectionlist/{book_id}', 'store');
+        Route::get('/user/collectionlist', 'index');
     });
-    Route::controller(ReadListUserBookController::class)->group(function () {
-        Route::post('/books/read', 'store');
+    Route::controller(ReadListController::class)->group(function () {
+        Route::get('/user/readlist/{book_id}', 'store');
+        Route::get('/user/readlist', 'index');
+        Route::get('/user/readlist/{book_id}', 'destroy');
+        Route::get('books/{book_id}/like', 'like');
+        Route::delete('books/{book_id}/like', 'unlike');
+        Route::get('like_books', 'likeBooks');
     });
-    Route::controller(WatchListUserBookController::class)->group(function () {
-        Route::post('/books/watch', 'store');
+    Route::controller(WatchListController::class)->group(function () {
+        Route::post('/books/watchlist/{book_id}', 'store');
+        Route::get('/books/watchlist', 'index');
     });
 });
 

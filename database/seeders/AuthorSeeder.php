@@ -14,6 +14,7 @@ class AuthorSeeder extends Seeder
     public function run(): void
     {
         $authors = [
+            'Arthur Conan Doyle',
             'Isaac Asimov',
             'J. R. R. Tolkien',
             'Stephen King',
@@ -23,22 +24,11 @@ class AuthorSeeder extends Seeder
             'Gabriel García Márquez',
             'George Orwell',
             'Friedrich Nietzsche',
-            'Karl Marx',
             'Dale Carnegie',
             'Julia Child',
             'Roald Dahl',
             'J. K. Rowling',
             'Pablo Neruda',
-            'Albert Camus',
-            'C. S. Lewis',
-            'Carl Sagan',
-            'Steve Jobs',
-            'Leonardo Da Vinci',
-            'Ludwig van Beethoven',
-            'Michael Jordan',
-            'Paulo Coelho',
-            'J. Michael Straczynski',
-            'Masashi Kishimoto',
         ];
 
         foreach ($authors as $author) {

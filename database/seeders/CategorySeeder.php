@@ -37,9 +37,6 @@ class CategorySeeder extends Seeder
             'Arte',
             'Música',
             'Deportes',
-            'Viajes',
-            'Cómics',
-            'Manga',
         ];
 
         foreach ($categories as $category) {

@@ -12,6 +12,8 @@ class Book extends Model
 
     protected $fillable = ['name', 'description', 'image_path'];
 
+    protected $hidden = ['pivot'];
+
     public function authors(): BelongsToMany
     {
         return $this->belongsToMany(Author::class);
@@ -20,11 +22,6 @@ class Book extends Model
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class);
-    }
-
-    public function userLists(): BelongsToMany
-    {
-        return $this->belongsToMany(UserList::class);
     }
 
     public function reviews()

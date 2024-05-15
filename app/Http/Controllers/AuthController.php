@@ -65,4 +65,12 @@ class AuthController extends Controller
             "message" => "Cierre de sesión correcto"
         ], 401);
     }
+
+    public function checkToken(Request $request): JsonResponse
+    {
+        return response()->json([
+            "success" => true,
+            "message" => "Token válido"
+        ]);
+    }
 }

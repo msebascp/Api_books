@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -25,30 +26,40 @@ class User extends Authenticatable
         'password',
     ];
 
-    public function read_books()
+    public function read_books(): BelongsToMany
     {
-        return $this->belongsToMany(Book::class, 'read_list_user_books', 'user_id', 'book_id');
+        return $this->belongsToMany(Book::class, 'read_lists', 'user_id', 'book_id')
+            ->orderByPivot('created_at', 'desc');
     }
 
-    public function collection_books()
+    public function collection_books(): BelongsToMany
     {
-        return $this->belongsToMany(Book::class, 'collection_list_user_books', 'user_id', 'book_id');
+        return $this->belongsToMany(Book::class, 'collection_lists', 'user_id', 'book_id')
+            ->orderByPivot('created_at', 'desc');
     }
 
-    public function watch_books()
+    public function watch_books(): BelongsToMany
     {
-        return $this->belongsToMany(Book::class, 'watch_list_user_books', 'user_id', 'book_id');
+        return $this->belongsToMany(Book::class, 'watch_lists', 'user_id', 'book_id')
+            ->orderByPivot('created_at', 'desc');
+    }
+
+    public function like_books(): BelongsToMany
+    {
+        return $this->belongsToMany(Book::class, 'read_lists', 'user_id', 'book_id')
+            ->wherePivot('is_like', true)
+            ->orderByPivot('created_at', 'desc');
     }
 
     // Relación de seguidores (usuarios que siguen a este usuario)
-    public function followers()
+    public function followers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'follows', 'user_id', 'follower_id')
             ->withTimestamps();
     }
 
     // Relación de usuarios seguidos por este usuario
-    public function following()
+    public function following(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'follows', 'follower_id', 'user_id')
             ->withTimestamps();

@@ -10,7 +10,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('read_lists', function (Blueprint $table) {
+        Schema::create('read_books', function (Blueprint $table) {
             $table->id();
             $table->foreignId("user_id")->constrained()->onDelete("cascade");
             $table->foreignId("book_id")->constrained()->onDelete("cascade");
@@ -24,6 +24,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('read_lists');
+        Schema::dropIfExists('read_books');
     }
 };

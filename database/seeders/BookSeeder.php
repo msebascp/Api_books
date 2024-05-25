@@ -54,7 +54,7 @@ class BookSeeder extends Seeder
          * 12. Julia Child
          * 13. Roald Dahl
          * 14. J. K. Rowling
-         * 15. Pablo Neruda
+         * 15. Brandon Sanderson
          */
         $books = [
             [
@@ -95,7 +95,25 @@ class BookSeeder extends Seeder
                 'image_path' => 'https://imagessl2.casadellibro.com/a/l/s7/42/9788418037542.webp',
                 'authors' => [2],
                 'categories' => [1],
+            ],
+            [
+                'name' => 'El camino de los reyes',
+                'description' => <<<EOT
+                Anhelo los días previos a la Última Desolación.
 
+                Los días en que los Heraldos nos abandonaron y los Caballeros Radiantes se giraron en nuestra contra. Un tiempo en que aún había magia en el mundo y honor en el corazón de los hombres.
+
+                El mundo fue nuestro, pero lo perdimos. Probablemente no hay nada más estimulante para las almas de los hombres que la victoria.
+
+                ¿O tal vez fue la victoria una ilusión durante todo ese tiempo? ¿Comprendieron nuestros enemigos que cuanto más duramente luchaban, más resistíamos nosotros? Quizá vieron que el fuego y el martillo tan solo producían mejores espadas. Pero ignoraron el acero durante el tiempo suficiente para oxidarse.
+
+                Hay cuatro personas a las que observamos. La primera es el médico, quien dejó de curar para convertirse en soldado durante la guerra más brutal de nuestro tiempo. La segunda es el asesino, un homicida que llora siempre que mata. La tercera es la mentirosa, una joven que viste un manto de erudita sobre un corazón de ladrona. Por último está el alto príncipe, un guerrero que mira al pasado mientras languidece su sed de guerra.
+
+                El mundo puede cambiar. La potenciación y el uso de las esquirlas pueden aparecer de nuevo, la magia de los días pasados puede volver a ser nuestra. Esas cuatro personas son la clave.
+                EOT,
+                'image_path' => 'https://imagessl2.casadellibro.com/a/l/s7/62/9788466657662.webp',
+                'authors' => [15],
+                'categories' => [2],
             ]
         ];
 

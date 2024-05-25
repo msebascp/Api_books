@@ -58,12 +58,11 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $user = Auth::user();
         $request->user()->tokens()->delete();
         return response()->json([
             "success" => true,
             "message" => "Cierre de sesión correcto"
-        ], 401);
+        ]);
     }
 
     public function checkToken(Request $request): JsonResponse

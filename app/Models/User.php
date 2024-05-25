@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -24,29 +25,33 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'image_profile_path',
+        'username'
     ];
 
     public function read_books(): BelongsToMany
     {
-        return $this->belongsToMany(Book::class, 'read_lists', 'user_id', 'book_id')
+        return $this->belongsToMany(Book::class, 'read_books', 'user_id', 'book_id')
+            ->withTimestamps()
             ->orderByPivot('created_at', 'desc');
     }
 
     public function collection_books(): BelongsToMany
     {
-        return $this->belongsToMany(Book::class, 'collection_lists', 'user_id', 'book_id')
+        return $this->belongsToMany(Book::class, 'collect_books', 'user_id', 'book_id')
             ->orderByPivot('created_at', 'desc');
     }
 
     public function watch_books(): BelongsToMany
     {
-        return $this->belongsToMany(Book::class, 'watch_lists', 'user_id', 'book_id')
+        return $this->belongsToMany(Book::class, 'watch_books', 'user_id', 'book_id')
+            ->withTimestamps()
             ->orderByPivot('created_at', 'desc');
     }
 
     public function like_books(): BelongsToMany
     {
-        return $this->belongsToMany(Book::class, 'read_lists', 'user_id', 'book_id')
+        return $this->belongsToMany(Book::class, 'read_books', 'user_id', 'book_id')
             ->wherePivot('is_like', true)
             ->orderByPivot('created_at', 'desc');
     }
@@ -63,6 +68,16 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(User::class, 'follows', 'follower_id', 'user_id')
             ->withTimestamps();
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
     }
 
     /**

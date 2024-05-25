@@ -2,18 +2,52 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class FollowController extends Controller
 {
-    public function store(Request $request)
+    public function index_followers(string $user_id)
     {
-        $request->validate([
-            "follower_id" => "required|exists:users,id",
-        ]);
         try {
-            $user = auth()->user();
-            $user->following()->attach($request->follower_id);
+            $user = User::find($user_id);
+            $followers = $user->followers;
+        } catch (\Exception $e) {
+            return response()->json([
+                "success" => false,
+                "message" => "User not found"
+            ]);
+        }
+        return response()->json([
+            "success" => true,
+            "message" => "Followers list",
+            "data" => $followers
+        ]);
+    }
+
+    public function index_following(string $user_id)
+    {
+        try {
+            $user = User::find($user_id);
+            $following = $user->following;
+        } catch (\Exception $e) {
+            return response()->json([
+                "success" => false,
+                "message" => "User not found"
+            ]);
+        }
+        return response()->json([
+            "success" => true,
+            "message" => "Following list",
+            "data" => $following
+        ]);
+    }
+
+    public function store(string $user_id)
+    {
+        try {
+            $me = auth()->user();
+            $me->following()->attach($user_id);
         } catch (\Exception $e) {
             return response()->json([
                 "success" => false,
@@ -26,14 +60,11 @@ class FollowController extends Controller
         ]);
     }
 
-    public function destroy(Request $request)
+    public function destroy(string $user_id)
     {
-        $request->validate([
-            "follower_id" => "required|exists:users,id",
-        ]);
         try {
-            $user = auth()->user();
-            $user->following()->detach($request->follower_id);
+            $me = auth()->user();
+            $me->following()->detach($user_id);
         } catch (\Exception $e) {
             return response()->json([
                 "success" => false,

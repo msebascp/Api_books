@@ -5,18 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * @method static find(string $id)
- * @method static create(array $array)
- */
-class Comment extends Model
+class ReadBook extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'user_id',
-        'review_id',
-        'content',
+        'book_id',
+        'is_like'
     ];
 
     public function user()
@@ -24,8 +20,13 @@ class Comment extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function book()
+    {
+        return $this->belongsTo(Book::class);
+    }
+
     public function review()
     {
-        return $this->belongsTo(Review::class);
+        return $this->hasOne(Review::class);
     }
 }

@@ -28,7 +28,7 @@ class AuthorSeeder extends Seeder
             'Julia Child',
             'Roald Dahl',
             'J. K. Rowling',
-            'Pablo Neruda',
+            'Brandon Sanderson',
         ];
 
         foreach ($authors as $author) {

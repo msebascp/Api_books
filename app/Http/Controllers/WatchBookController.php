@@ -39,9 +39,11 @@ class WatchBookController extends Controller
         try {
             $user = auth()->user();
             $book = Book::findOrFail($id);
-            $user->watch_books()->attach($book);
+            $user->
+            watch_books()->attach($book);
             $book->load(['authors:id,name', 'categories:id,name']);
             $book->in_watchlist = true;
+            $book->in_collectionlist = CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
             if (ReadBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
                 $book->is_read = true;
                 $is_like = ReadBook::where('user_id', auth()->id())->where('book_id', $id)->value('is_like');
@@ -51,11 +53,12 @@ class WatchBookController extends Controller
                 $book->is_read = false;
                 $book->is_like = false;
             }
-            if (CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
-                $book->in_collectionlist = true;
-            } else {
-                $book->in_collectionlist = false;
-            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Book added to user watch list',
+                'data' => $book
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -63,11 +66,6 @@ class WatchBookController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Book added to user watch list',
-            'data' => $book
-        ]);
     }
 
     public function destroy(string $id): JsonResponse
@@ -78,6 +76,7 @@ class WatchBookController extends Controller
             $user->watch_books()->detach($book);
             $book->load(['authors:id,name', 'categories:id,name']);
             $book->in_watchlist = false;
+            $book->in_collectionlist = CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
             if (ReadBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
                 $book->is_read = true;
                 $is_like = ReadBook::where('user_id', auth()->id())->where('book_id', $id)->value('is_like');
@@ -87,11 +86,12 @@ class WatchBookController extends Controller
                 $book->is_read = false;
                 $book->is_like = false;
             }
-            if (CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
-                $book->in_collectionlist = true;
-            } else {
-                $book->in_collectionlist = false;
-            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Book removed from user watch list',
+                'data' => $book
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -99,10 +99,5 @@ class WatchBookController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Book removed from user watch list',
-            'data' => $book
-        ]);
     }
 }

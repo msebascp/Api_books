@@ -12,17 +12,17 @@ class CategoryController extends Controller
     {
         try {
             $categories = Category::all();
+            return response()->json([
+                'success' => true,
+                'message' => 'All categories',
+                'data' => $categories
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to get categories'
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'All categories',
-            'data' => $categories
-        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -31,18 +31,20 @@ class CategoryController extends Controller
             'name' => 'required|string'
         ]);
         try {
-            $category = Category::create($request->all());
+            $category = new Category;
+            $category->name = $request->name;
+            $category->save();
+            return response()->json([
+                'success' => true,
+                'message' => 'Category created',
+                'data' => $category
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create category'
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Category created',
-            'data' => $category
-        ]);
     }
 
     public function show(string $id): JsonResponse
@@ -63,6 +65,9 @@ class CategoryController extends Controller
 
     public function update(Request $request, string $id): JsonResponse
     {
+        $request->validate([
+            'name' => 'required|string'
+        ]);
         $category = Category::find($id);
         if ($category === null) {
             return response()->json([
@@ -70,22 +75,20 @@ class CategoryController extends Controller
                 'message' => 'Category not found'
             ], 404);
         }
-        $request->validate([
-            'name' => 'required|string'
-        ]);
         try {
-            $category->update($request->all());
+            $category->name = $request->name;
+            $category->save();
+            return response()->json([
+                'success' => true,
+                'message' => 'Category updated',
+                'data' => $category
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update category'
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Category updated',
-            'data' => $category
-        ]);
     }
 
     public function destroy(string $id): JsonResponse
@@ -99,15 +102,15 @@ class CategoryController extends Controller
         }
         try {
             $category->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Category deleted'
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete category'
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Category deleted'
-        ]);
     }
 }

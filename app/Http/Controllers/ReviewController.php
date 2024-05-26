@@ -22,6 +22,12 @@ class ReviewController extends Controller
             $reviews = $user->reviews;
             //cargar relaciones de book
             $reviews->load('book');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Reviews of user',
+                'data' => $reviews
+            ]);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -29,17 +35,19 @@ class ReviewController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Reviews of user',
-            'data' => $reviews
-        ]);
     }
 
     public function index_book($book_id): JsonResponse
     {
         try {
             $reviews = Review::where('book_id', $book_id)->get();
+            $reviews->load(['user']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Reviews of book',
+                'data' => $reviews
+            ]);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -47,11 +55,6 @@ class ReviewController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Reviews of book',
-            'data' => $reviews
-        ]);
     }
 
     public function show($id): JsonResponse
@@ -64,6 +67,11 @@ class ReviewController extends Controller
                 $review->comments = [];
             }
             $review->load(['book', 'user']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Review',
+                'data' => $review
+            ]);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -71,11 +79,6 @@ class ReviewController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Review',
-            'data' => $review
-        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -98,6 +101,11 @@ class ReviewController extends Controller
                     'read_book_id' => $read_book_id,
                     'content' => $request->review
                 ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Review created',
+                'data' => $review
+            ]);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -105,11 +113,6 @@ class ReviewController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Review created',
-            'data' => $review
-        ]);
     }
 
     public function update(Request $request, $id): JsonResponse
@@ -126,6 +129,11 @@ class ReviewController extends Controller
                 'book_id' => $request->book_id,
                 'content' => $request->review
             ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Review updated',
+                'data' => $review
+            ]);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -133,11 +141,6 @@ class ReviewController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Review updated',
-            'data' => $review
-        ]);
     }
 
     public function destroy($id): JsonResponse
@@ -145,6 +148,11 @@ class ReviewController extends Controller
         try {
             $review = Review::find($id);
             $review->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Review deleted',
+                'data' => $review
+            ]);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -152,10 +160,5 @@ class ReviewController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Review deleted',
-            'data' => $review
-        ]);
     }
 }

@@ -18,7 +18,13 @@ class UserController extends Controller
             $miId = auth()->user()->id;
             $user->isMe = $miId == $id;
             // Comprobar si el usuario autenticado sigue al usuario solicitado
-            $user->isFollowing = auth()->user()->following->contains($id);
+            $user->isFollowing = $user->following->contains($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User found',
+                'data' => $user
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -26,10 +32,24 @@ class UserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'User found',
-            'data' => $user
-        ]);
+    }
+
+    public function search(string $username): JsonResponse
+    {
+        try {
+            $users = User::where('username', 'like', "%$username%")->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Users found',
+                'data' => $users
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error searching users',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

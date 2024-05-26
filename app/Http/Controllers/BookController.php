@@ -35,16 +35,30 @@ class BookController extends Controller
         $request->validate([
             'name' => 'required|string',
             'description' => 'required|string',
-            'image_path' => 'required|string|nullable'
+            'image_path' => 'nullable|string'
         ]);
         try {
-            $book = Book::create($request->all());
+            $book = new Book();
+            $book->name = $request->name;
+            $book->description = $request->description;
+            $book->image_path = $request->image_path;
+            $book->save();
             if ($request->has('authors')) {
-                $book->authors()->attach($request->authors);
+                $authors = $request->authors;
+                unset($request['authors']);
+                $book->authors()->attach($authors);
             }
             if ($request->has('categories')) {
-                $book->categories()->attach($request->categories);
+                $categories = $request->categories;
+                unset($request['categories']);
+                $book->categories()->attach($categories);
             }
+            $book->save();
+            return response()->json([
+                'success' => true,
+                'message' => 'Book created',
+                'data' => $book
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -52,13 +66,16 @@ class BookController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Book created',
-            'data' => $book
-        ]);
     }
 
+    /**
+     * Devuelve la información básica de un libro,
+     * incluyendo los autores y categorías asociados a él.
+     * Además, se indica si el usuario autenticado ha leído el libro,
+     * si lo tiene en su watchlist y si lo tiene en su colección.
+     * @param string $id
+     * @return JsonResponse
+     */
     public function show(string $id): JsonResponse
     {
         $book = Book::with(['authors:id,name', 'categories:id,name'])->find($id);
@@ -76,16 +93,8 @@ class BookController extends Controller
             $book->is_read = false;
             $book->is_like = false;
         }
-        if (WatchBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
-            $book->in_watchlist = true;
-        } else {
-            $book->in_watchlist = false;
-        }
-        if (CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
-            $book->in_collectionlist = true;
-        } else {
-            $book->in_collectionlist = false;
-        }
+        $book->in_watchlist = WatchBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
+        $book->in_collectionlist = CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
         return response()->json([
             'success' => true,
             'message' => 'Book found',
@@ -95,6 +104,11 @@ class BookController extends Controller
 
     public function update(Request $request, string $id): JsonResponse
     {
+        $request->validate([
+            'name' => 'required|string',
+            'description' => 'required|string',
+            'image_path' => 'nullable|string'
+        ]);
         $book = Book::find($id);
         if ($book === null) {
             return response()->json([
@@ -102,11 +116,6 @@ class BookController extends Controller
                 'message' => 'Book not found'
             ], 404);
         }
-        $request->validate([
-            'name' => 'required|string',
-            'description' => 'required|string',
-            'image_path' => 'required|string|nullable'
-        ]);
         try {
             $book->update($request->all());
             if ($request->has('authors')) {
@@ -115,6 +124,11 @@ class BookController extends Controller
             if ($request->has('categories')) {
                 $book->categories()->sync($request->categories);
             }
+            return response()->json([
+                'success' => true,
+                'message' => 'Book updated',
+                'data' => $book
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -122,11 +136,6 @@ class BookController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Book updated',
-            'data' => $book
-        ]);
     }
 
     public function destroy(string $id): JsonResponse
@@ -140,6 +149,10 @@ class BookController extends Controller
         }
         try {
             $book->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Book deleted'
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -147,9 +160,23 @@ class BookController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Book deleted'
-        ]);
+    }
+
+    public function search(string $bookName): JsonResponse
+    {
+        try {
+            $books = Book::where('name', 'like', '%' . $bookName . '%')->get();
+            return response()->json([
+                'success' => true,
+                'message' => 'Books found',
+                'data' => $books
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error searching books',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

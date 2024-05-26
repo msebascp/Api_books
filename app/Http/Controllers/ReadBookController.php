@@ -37,10 +37,15 @@ class ReadBookController extends Controller
         }
     }
 
-    public function show(string $book_id): JsonResponse
+    public function show(string $book_id, ?string $userId = null): JsonResponse
     {
         try {
-            $read_book = ReadBook::where('user_id', auth()->id())->where('book_id', $book_id)->first();
+            if ($userId == null) {
+                $user_id = auth()->id();
+            } else {
+                $user_id = $userId;
+            }
+            $read_book = ReadBook::where('user_id', $user_id)->where('book_id', $book_id)->first();
             if ($read_book == null) {
                 return response()->json([
                     'success' => false,
@@ -66,9 +71,15 @@ class ReadBookController extends Controller
     {
         try {
             $user = Auth::user();
-            $book = Book::findOrFail($id);
-            $book->load(['authors:id,name', 'categories:id,name']);
+            $book = Book::find($id);
+            if ($book == null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Book not found',
+                ], 404);
+            }
             $user->read_books()->attach($book);
+            $book->load(['authors:id,name', 'categories:id,name']);
             $book->is_read = true;
             $book->is_like = false;
             if (WatchBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
@@ -77,11 +88,13 @@ class ReadBookController extends Controller
             } else {
                 $book->in_watchlist = false;
             }
-            if (CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
-                $book->in_collectionlist = true;
-            } else {
-                $book->in_collectionlist = false;
-            }
+            $book->in_collectionlist = CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Book added to user read list',
+                'data' => $book
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -89,18 +102,19 @@ class ReadBookController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Book added to user read list',
-            'data' => $book
-        ]);
     }
 
     public function destroy(string $id): JsonResponse
     {
         try {
             $user = Auth::user();
-            $book = Book::findOrFail($id);
+            $book = Book::find($id);
+            if ($book == null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Book not found',
+                ], 404);
+            }
             $user->read_books()->detach($book);
             if (Review::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
                 Review::where('user_id', auth()->id())->where('book_id', $id)->delete();
@@ -108,16 +122,14 @@ class ReadBookController extends Controller
             $book->load(['authors:id,name', 'categories:id,name']);
             $book->is_read = false;
             $book->is_like = false;
-            if (WatchBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
-                $book->in_watchlist = true;
-            } else {
-                $book->in_watchlist = false;
-            }
-            if (CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
-                $book->in_collectionlist = true;
-            } else {
-                $book->in_collectionlist = false;
-            }
+            $book->in_watchlist = WatchBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
+            $book->in_collectionlist = CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Book removed from user read list',
+                'data' => $book
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -125,11 +137,6 @@ class ReadBookController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Book removed from user read list',
-            'data' => $book
-        ]);
     }
 
     public function like(string $id): JsonResponse
@@ -140,16 +147,14 @@ class ReadBookController extends Controller
             $book->load(['authors:id,name', 'categories:id,name']);
             $book->is_read = true;
             $book->is_like = true;
-            if (WatchBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
-                $book->in_watchlist = true;
-            } else {
-                $book->in_watchlist = false;
-            }
-            if (CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
-                $book->in_collectionlist = true;
-            } else {
-                $book->in_collectionlist = false;
-            }
+            $book->in_watchlist = WatchBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
+            $book->in_collectionlist = CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Book liked',
+                'data' => $book
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -157,31 +162,30 @@ class ReadBookController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Book liked',
-            'data' => $book
-        ]);
     }
 
     public function unlike(string $id): JsonResponse
     {
         try {
             ReadBook::where('user_id', auth()->id())->where('book_id', $id)->update(['is_like' => false]);
-            $book = Book::findOrFail($id);
+            $book = Book::find($id);
+            if ($book == null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Book not found',
+                ], 404);
+            }
             $book->load(['authors:id,name', 'categories:id,name']);
             $book->is_read = true;
             $book->is_like = false;
-            if (WatchBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
-                $book->in_watchlist = true;
-            } else {
-                $book->in_watchlist = false;
-            }
-            if (CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
-                $book->in_collectionlist = true;
-            } else {
-                $book->in_collectionlist = false;
-            }
+            $book->in_watchlist = WatchBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
+            $book->in_collectionlist = CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Book unliked',
+                'data' => $book
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -189,18 +193,13 @@ class ReadBookController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Book unliked',
-            'data' => $book
-        ]);
     }
 
     public function likeBooks(): JsonResponse
     {
         try {
             $user = Auth::user();
-            $like_books = $user->like_books->load(['authors:id,name', 'categories:id,name']);
+            $like_books = $user->like_books;
             return response()->json([
                 'success' => true,
                 'message' => 'User like list',

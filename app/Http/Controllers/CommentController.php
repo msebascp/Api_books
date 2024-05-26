@@ -10,10 +10,11 @@ use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
-    public function index_review(string $bookdId): JsonResponse
+    public function index_review(string $review_id): JsonResponse
     {
         try {
-            $comments = Review::findOrFail($bookdId)->comments;
+            $comments = Review::findOrFail($review_id)->comments;
+            $comments->load('user');
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -34,14 +35,17 @@ class CommentController extends Controller
             'review_id' => 'required|integer',
             'comment' => 'required|string'
         ]);
-        $user = auth()->user();
         try {
-            $comment = Comment::create([
-                'user_id' => $user->id,
-                'review_id' => $request->get('review_id'),
-                'content' => $request->get('comment')
-            ]);
+            $comment = new Comment();
+            $comment->user_id = auth()->user()->id;
+            $comment->review_id = $request->get('review_id');
+            $comment->content = $request->get('comment');
             $comment->load('user');
+            return response()->json([
+                'success' => true,
+                'message' => 'Comment created',
+                'data' => $comment
+            ]);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -49,16 +53,11 @@ class CommentController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Comment created',
-            'data' => $comment
-        ]);
     }
 
     public function show(string $id): JsonResponse
     {
-        $comment = Comment::with(['user:id,name', 'book:id,name'])->find($id);
+        $comment = Comment::with(['user'])->find($id);
         if ($comment === null) {
             return response()->json([
                 'success' => false,
@@ -75,10 +74,8 @@ class CommentController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $request->validate([
-            'book_id' => 'required|integer',
             'comment' => 'required|string'
         ]);
-        $user = auth()->user();
         $comment = Comment::find($id);
         if ($comment === null) {
             return response()->json([
@@ -88,9 +85,14 @@ class CommentController extends Controller
         }
         try {
             $comment->update([
-                'user_id' => $user->id,
+                'user_id' => auth()->user()->id,
                 'book_id' => $request->get('book_id'),
-                'comment' => $request->get('comment')
+                'content' => $request->get('comment')
+            ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Comment updated',
+                'data' => $comment
             ]);
         } catch (Exception $e) {
             return response()->json([
@@ -99,11 +101,6 @@ class CommentController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Comment updated',
-            'data' => $comment
-        ]);
     }
 
     public function destroy(string $id): JsonResponse
@@ -117,6 +114,10 @@ class CommentController extends Controller
         }
         try {
             $comment->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Comment deleted'
+            ]);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -124,9 +125,5 @@ class CommentController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'Comment deleted'
-        ]);
     }
 }

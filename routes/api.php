@@ -33,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/books', 'store');
         Route::put('/books/{id}', 'update');
         Route::delete('/books/{id}', 'destroy');
+        Route::get('/books/search/{bookName}', 'search');
     });
     Route::controller(CategoryController::class)->group(function () {
         Route::get('/categories', 'index');
@@ -42,7 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/categories/{id}', 'destroy');
     });
     Route::controller(CommentController::class)->group(function () {
-        Route::get('/comments', 'index');
+        Route::get('/comments/review/{review_id}', 'index_review');
         Route::get('/comments/{id}', 'show');
         Route::post('/comments', 'store');
         Route::put('/comments/{id}', 'update');
@@ -63,7 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/readbooks/user/{user_id?}', 'index');
         Route::get('/readbooks/read/{book_id}', 'store');
         Route::delete('/readbooks/read/{book_id}', 'destroy');
-        Route::get('/readbooks/book/{book_id}', 'show');
+        Route::get('/readbooks/book/{book_id}/{user_id?}', 'show');
         Route::get('/readbooks/like/{book_id}', 'like');
         Route::delete('/readbooks/like/{book_id}', 'unlike');
         Route::get('/like_books', 'likeBooks');
@@ -78,6 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::controller(UserController::class)->group(function () {
         Route::get('/users/{user_id?}', 'show');
+        Route::get('/users/search/{username}', 'search');
     });
     Route::controller(WatchBookController::class)->group(function () {
         Route::get('/watchbooks/user/{user_id?}', 'index');

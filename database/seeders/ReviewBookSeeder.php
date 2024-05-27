@@ -20,12 +20,16 @@ class ReviewBookSeeder extends Seeder
                 'book_id' => 1,
                 'read_book_id' => 1,
                 'content' => 'Es un gran libro',
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'user_id' => 2,
                 'book_id' => 1,
                 'read_book_id' => 2,
                 'content' => 'No me gustó',
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ]);
     }

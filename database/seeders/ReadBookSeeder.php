@@ -17,62 +17,86 @@ class ReadBookSeeder extends Seeder
             [
                 'user_id' => 1,
                 'book_id' => 1,
-                'is_like' => true
+                'is_like' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'user_id' => 2,
                 'book_id' => 1,
-                'is_like' => false
+                'is_like' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'user_id' => 3,
                 'book_id' => 1,
-                'is_like' => true
+                'is_like' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'user_id' => 1,
                 'book_id' => 2,
-                'is_like' => true
+                'is_like' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'user_id' => 2,
                 'book_id' => 2,
-                'is_like' => false
+                'is_like' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'user_id' => 3,
                 'book_id' => 2,
-                'is_like' => true
+                'is_like' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'user_id' => 1,
                 'book_id' => 3,
-                'is_like' => true
+                'is_like' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'user_id' => 2,
                 'book_id' => 3,
-                'is_like' => false
+                'is_like' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'user_id' => 3,
                 'book_id' => 3,
-                'is_like' => true
+                'is_like' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'user_id' => 1,
                 'book_id' => 4,
-                'is_like' => true
+                'is_like' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'user_id' => 2,
                 'book_id' => 4,
-                'is_like' => false
+                'is_like' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'user_id' => 3,
                 'book_id' => 4,
-                'is_like' => true
+                'is_like' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ]);
     }

@@ -37,13 +37,11 @@ class ReadBookController extends Controller
         }
     }
 
-    public function show(string $book_id, ?string $userId = null): JsonResponse
+    public function show(string $book_id, ?string $user_id = ""): JsonResponse
     {
         try {
-            if ($userId == null) {
-                $user_id = auth()->id();
-            } else {
-                $user_id = $userId;
+            if ($user_id == null || $user_id == "") {
+                $user_id = auth()->user()->id;
             }
             $read_book = ReadBook::where('user_id', $user_id)->where('book_id', $book_id)->first();
             if ($read_book == null) {

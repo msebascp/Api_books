@@ -21,21 +21,27 @@ class UserSeeder extends Seeder
                 'username' => 'sebas095',
                 'email' => 'admin@appbooks.com',
                 'image_profile_path' => 'https://avatars.githubusercontent.com/u/113929087?v=4',
-                'password' => Hash::make("12345678")
+                'password' => Hash::make("1234appbooks"),
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'name' => 'Óscar',
                 'username' => 'oscar2007',
                 'email' => 'oscar@appbooks.com',
                 'image_profile_path' => 'https://avatars.githubusercontent.com/u/113929087?v=4',
-                'password' => Hash::make("12345678")
+                'password' => Hash::make("1234appbooks"),
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'name' => 'Carlos',
                 'username' => 'carlos001',
                 'email' => 'carlos@appbooks.com',
                 'image_profile_path' => 'https://avatars.githubusercontent.com/u/113929087?v=4',
-                'password' => Hash::make("12345678")
+                'password' => Hash::make("1234appbooks"),
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ]);
     }

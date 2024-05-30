@@ -19,6 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/login', 'login')->withoutMiddleware('auth:sanctum');
         Route::get('/logout', 'logout');
         Route::get('/check_token', 'checkToken');
+        Route::get('/reset_password/{email}', 'forgotPassword');
     });
     Route::controller(AuthorController::class)->group(function () {
         Route::get('/authors', 'index');

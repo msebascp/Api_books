@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ForgotPassword;
 use App\Models\Book;
 use App\Models\CollectBook;
 use App\Models\ReadBook;
@@ -9,6 +10,7 @@ use App\Models\WatchBook;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class BookController extends Controller
 {

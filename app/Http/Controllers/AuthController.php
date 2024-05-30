@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ForgotPassword;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -95,4 +97,33 @@ class AuthController extends Controller
             "message" => "Token válido"
         ]);
     }
+
+    public function forgotPassword(string $email): JsonResponse
+    {
+        try {
+            if (User::where('email', $email)->exists()) {
+                $user = User::where('email', $email)->first();
+                $password = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 10);
+                $user->password = Hash::make($password);
+                $user->save();
+                Mail::to($email)->send(new ForgotPassword($password, $user));
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Password reset successfully',
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email not found',
+                ], 404);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al resetear la contraseña',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

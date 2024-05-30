@@ -15,6 +15,10 @@ class ReadBook extends Model
         'is_like'
     ];
 
+    protected $casts = [
+        'is_like' => 'boolean',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

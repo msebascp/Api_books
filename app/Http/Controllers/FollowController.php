@@ -60,14 +60,19 @@ class FollowController extends Controller
         try {
             $me = auth()->user();
             $me->following()->attach($user_id);
+            $user = User::find($user_id);
+            $user->isMe = $me->id == $user_id;
+            // Comprobar si el usuario autenticado sigue al usuario solicitado
+            $user->isFollowing = $me->following->contains($user_id);
             return response()->json([
                 "success" => true,
-                "message" => "Followed successfully"
+                "message" => "Followed successfully",
+                "data" => $user
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 "success" => false,
-                "message" => "Already followed"
+                "message" => "Already followed",
             ]);
         }
     }
@@ -77,9 +82,14 @@ class FollowController extends Controller
         try {
             $me = auth()->user();
             $me->following()->detach($user_id);
+            $user = User::find($user_id);
+            $user->isMe = $me->id == $user_id;
+            // Comprobar si el usuario autenticado sigue al usuario solicitado
+            $user->isFollowing = $me->following->contains($user_id);
             return response()->json([
                 "success" => true,
-                "message" => "Unfollowed successfully"
+                "message" => "Unfollowed successfully",
+                "data" => $user
             ]);
         } catch (\Exception $e) {
             return response()->json([

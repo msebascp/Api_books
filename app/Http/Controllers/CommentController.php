@@ -41,6 +41,7 @@ class CommentController extends Controller
             $comment->review_id = $request->get('review_id');
             $comment->content = $request->get('comment');
             $comment->load('user');
+            $comment->save();
             return response()->json([
                 'success' => true,
                 'message' => 'Comment created',

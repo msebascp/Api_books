@@ -15,10 +15,10 @@ class UserController extends Controller
                 $id = auth()->user()->id;
             }
             $user = User::find($id);
-            $miId = auth()->user()->id;
-            $user->isMe = $miId == $id;
+            $me = auth()->user();
+            $user->isMe = $me->id == $id;
             // Comprobar si el usuario autenticado sigue al usuario solicitado
-            $user->isFollowing = $user->following->contains($id);
+            $user->isFollowing = $me->following->contains($id);
 
             return response()->json([
                 'success' => true,

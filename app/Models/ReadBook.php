@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,8 +16,12 @@ class ReadBook extends Model
         'is_like'
     ];
 
+    public $timestamps = true;
+
     protected $casts = [
         'is_like' => 'boolean',
+        'created_at' => 'datetime:d-m-Y',
+        'updated_at' => 'datetime:d-m-Y',
     ];
 
     public function user()

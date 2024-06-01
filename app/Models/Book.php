@@ -14,6 +14,15 @@ class Book extends Model
 
     protected $hidden = ['pivot'];
 
+
+    public $timestamps = true;
+
+    protected $casts = [
+        'created_at' => 'datetime:d-m-Y',
+        'updated_at' => 'datetime:d-m-Y',
+    ];
+
+
     public function authors(): BelongsToMany
     {
         return $this->belongsToMany(Author::class)

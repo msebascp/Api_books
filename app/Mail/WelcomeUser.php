@@ -5,6 +5,7 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -27,7 +28,8 @@ class WelcomeUser extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome User',
+            from: new Address('appbooks@appbooks.com', 'AppBooks'),
+            subject: 'Bienvenido a AppBooks',
         );
     }
 
@@ -37,7 +39,7 @@ class WelcomeUser extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'view.name',
+            view: 'WelcomeUserMailView',
         );
     }
 

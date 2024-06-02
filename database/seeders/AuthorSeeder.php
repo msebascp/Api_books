@@ -19,7 +19,7 @@ class AuthorSeeder extends Seeder
             'J. R. R. Tolkien',
             'Stephen King',
             'Jane Austen',
-            'Jules Verne',
+            'Julio Verne',
             'Agatha Christie',
             'Gabriel García Márquez',
             'George Orwell',
@@ -29,6 +29,8 @@ class AuthorSeeder extends Seeder
             'Roald Dahl',
             'J. K. Rowling',
             'Brandon Sanderson',
+            'Oscar Wilde',
+            'Joel Dicker',
         ];
 
         foreach ($authors as $author) {

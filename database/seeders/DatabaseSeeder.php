@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             BookSeeder::class,
             ReadBookSeeder::class,
             ReviewBookSeeder::class,
+            CommentSeeder::class,
         ]);
     }
 }

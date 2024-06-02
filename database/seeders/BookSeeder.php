@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Book;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class BookSeeder extends Seeder
@@ -45,7 +44,7 @@ class BookSeeder extends Seeder
          * 3. J. R. R. Tolkien
          * 4. Stephen King
          * 5. Jane Austen
-         * 6. Jules Verne
+         * 6. Julio Verne
          * 7. Agatha Christie
          * 8. Gabriel García Márquez
          * 9. George Orwell
@@ -55,6 +54,8 @@ class BookSeeder extends Seeder
          * 13. Roald Dahl
          * 14. J. K. Rowling
          * 15. Brandon Sanderson
+         * 16. Oscar Wilde
+         * 17. Joel Dicker
          */
         $books = [
             [
@@ -114,6 +115,69 @@ class BookSeeder extends Seeder
                 'image_path' => 'https://imagessl2.casadellibro.com/a/l/s7/62/9788466657662.webp',
                 'authors' => [15],
                 'categories' => [2],
+            ],
+            [
+                'name' => 'La isla misteriosa',
+                'description' => <<<EOT
+                Durante la guerra civil americana, cinco hombres logran escapar del  asedio de Richmond en un globo aerostático que finalmente acabará  estrellándose en una isla desierta de los Mares del Sur. Los cinco  compañeros no tienen nada salvo su ingenio para sobrevivir en una isla  que muy pronto se mostrará llena de secretos, misterios y enigmas que jamás hubieran podido imaginar.
+
+                Jules Verne quizá lograra con La isla misteriosa su novela más  intrigante y entretenida. La presente edición, en magnífica traducción  de Teresa Clavel, se completa además con la introducción de Constantino  Bertolo, uno de los críticos literarios más prestigiosos de las letras hispánicas contemporáneas.
+                EOT,
+                'image_path' => 'https://imagessl8.casadellibro.com/a/l/s7/48/9788491052548.webp',
+                'authors' => [6],
+                'categories' => [5],
+            ],
+            [
+                'name' => '1984',
+                'description' => <<<EOT
+                En el año 1984 Londres es una ciudad lúgubre en la que la Policía del Pensamiento controla de forma asfixiante la vida de los ciudadanos. Winston Smith es un peón de este engranaje perverso y su cometido es reescribir la historia para adaptarla a lo que el Partido considera la versión oficial de los hechos. Hasta que decide replantearse la verdad del sistema que los gobierna y somete.
+                EOT,
+                'image_path' => 'https://imagessl4.casadellibro.com/a/l/s7/44/9788499890944.webp',
+                'authors' => [9],
+                'categories' => [18],
+            ],
+            [
+                'name' => 'Cien años de soledad',
+                'description' => <<<EOT
+                "Muchos años despues, frente al pelotón de fusilamiento, el coronel Aureliano Buendía había de recordar aquella tarde remota en que su padre lo llevó a conocer el hielo."
+
+                Con esta cita comienza una de las novelas más importantes del siglo XX y una de las aventuras literarias más fascinantes de todos los tiempos. Millones de ejemplares de Cien años de soledad leídos en todas las lenguas y el premio Nobel de Literatura coronando una obra que se había abierto paso "boca a boca" -como gustaba decir el escritor- son la más palpable demostración de que la aventura fabulosa de la familia Buendía-Iguarán, con sus milagros, fantasías, obsesiones, tragedias, incestos, adulterios, rebeldías, descubrimientos y condenas, representaba al mismo tiempo el mito y la historia, la tragedia y el amor del mundo entero.
+                EOT,
+                'image_path' => 'https://imagessl8.casadellibro.com/a/l/s7/08/9788497592208.webp',
+                'authors' => [8],
+                'categories' => [6],
+            ],
+            [
+                'name' => 'Diez negritos',
+                'description' => <<<EOT
+                La novela más vendida de Agatha Christie, con unos 100 millones de ejemplares vendidos.
+                Diez personas sin relación alguna entre sí son reunidas en un misterioso islote de la costa inglesa por un tal Sr. Owen, propietario de una lujosa mansión a la par que perfecto desconocido para todos sus invitados. Tras la primera cena, y sin haber conocido aún a su anfitrión, los diez comensales son acusados mediante una grabación de haber cometido un crimen en el pasado.
+
+                Uno por uno, a partir de ese momento, son asesinados sin explicación ni motivo aparente. Sólo una vieja canción infantil parece encerrar el misterio de una creciente pesadilla.
+                EOT,
+                'image_path' => 'https://imagessl0.casadellibro.com/a/l/s7/90/9788467045390.webp',
+                'authors' => [7],
+                'categories' => [6],
+            ],
+            [
+                'name' => 'El retrato de Dorian Gray',
+                'description' => <<<EOT
+                Basil Hallward había terminado el retrato. El joven Dorian, al verlo, no  pudo más que desear, desde su frívola inocencia, que fuera su imagen la  que envejeciera y se corrompiera con el paso de los años mientras el  permanecía intacto. Y así fue: a partir de entonces, Dorian Gray  conservó no solo la lozanía y la hermosura propias de la juventud, sino el aspecto puro de los inocentes. Pero ¿a que precio?
+                EOT,
+                'image_path' => 'https://imagessl6.casadellibro.com/a/l/s7/36/9788467032536.webp',
+                'authors' => [16],
+                'categories' => [6],
+            ],
+            [
+                'name' => 'El libro de los Baltimore',
+                'description' => <<<EOT
+                Hasta que tuvo lugar el Drama existían dos ramas de la familia Goldman: los Goldman de Baltimore y los Goldman de Montclair. Los Montclair, de los que forma parte Marcus Goldman, autor de La verdad sobre el caso Harry Quebert, es una familia de clase media que vive en una pequeña casa en el estado de Nueva Jersey. Los Baltimore, prósperos y a los que la suerte siempre ha sonreído, habitan una lujosa mansión en un barrio de la alta sociedad de Baltimore.
+
+                Ocho años después del Drama, Marcus Goldman pone el pasado bajo la lupa en busca de la verdad sobre el ocaso de la familia. Entre los recuerdos de su juventud revive la fascinación que sintió desde niño por los Baltimore, que encarnaban la América patricia con sus vacaciones en Miami y en los Hamptons y sus colegios elitistas. Con el paso de los años la brillante pátina de los Baltimore se desvanece al tiempo que el Drama se va perfilando. Hasta el día en el que todo cambia para siempre.
+                EOT,
+                'image_path' => 'https://imagessl9.casadellibro.com/a/l/s7/39/9788420423739.webp',
+                'authors' => [17],
+                'categories' => [6],
             ]
         ];
 

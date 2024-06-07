@@ -80,7 +80,7 @@ class BookController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $book = Book::with(['authors:id,name', 'categories:id,name'])->find($id);
+        $book = Book::with(['authors:id,name', 'categories:id,name', 'reviews.user'])->find($id);
         if ($book === null) {
             return response()->json([
                 'success' => false,

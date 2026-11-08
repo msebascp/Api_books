@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\Author;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class AuthorSeeder extends Seeder
@@ -33,8 +34,8 @@ class AuthorSeeder extends Seeder
             'Joel Dicker',
         ];
 
-        foreach ($authors as $author) {
-            Author::create(['name' => $author]);
+        foreach ($authors as $authorName) {
+            Author::create(['name' => $authorName]);
         }
     }
 }

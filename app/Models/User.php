@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,79 +13,29 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles, HasApiTokens;
+    /** @use HasFactory<UserFactory> */
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
-        'image_profile_path',
-        'username'
+        'avatar_path',
+        'bio',
     ];
-
-    public function read_books(): BelongsToMany
-    {
-        return $this->belongsToMany(Book::class, 'read_books', 'user_id', 'book_id')
-            ->withTimestamps()
-            ->orderByPivot('created_at', 'desc');
-    }
-
-    public function collection_books(): BelongsToMany
-    {
-        return $this->belongsToMany(Book::class, 'collect_books', 'user_id', 'book_id')
-            ->orderByPivot('created_at', 'desc');
-    }
-
-    public function watch_books(): BelongsToMany
-    {
-        return $this->belongsToMany(Book::class, 'watch_books', 'user_id', 'book_id')
-            ->withTimestamps()
-            ->orderByPivot('created_at', 'desc');
-    }
-
-    public function like_books(): BelongsToMany
-    {
-        return $this->belongsToMany(Book::class, 'read_books', 'user_id', 'book_id')
-            ->wherePivot('is_like', true)
-            ->orderByPivot('created_at', 'desc');
-    }
-
-    // Relación de seguidores (usuarios que siguen a este usuario)
-    public function followers(): BelongsToMany
-    {
-        return $this->belongsToMany(User::class, 'follows', 'user_id', 'follower_id')
-            ->withTimestamps();
-    }
-
-    // Relación de usuarios seguidos por este usuario
-    public function following(): BelongsToMany
-    {
-        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'user_id')
-            ->withTimestamps();
-    }
-
-    public function reviews(): HasMany
-    {
-        return $this->hasMany(Review::class);
-    }
-
-    public function comments(): HasMany
-    {
-        return $this->hasMany(Comment::class);
-    }
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $hidden = [
         'password',
@@ -101,5 +53,70 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * @return HasMany<LibraryEntry, $this>
+     */
+    public function libraryEntries(): HasMany
+    {
+        return $this->hasMany(LibraryEntry::class);
+    }
+
+    /**
+     * @return BelongsToMany<Book, $this>
+     */
+    public function books(): BelongsToMany
+    {
+        return $this->belongsToMany(Book::class, 'library_entries')
+            ->withPivot(['status', 'is_owned', 'is_favorite', 'read_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<Review, $this>
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * @return HasMany<Comment, $this>
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /**
+     * @return BelongsToMany<Review, $this>
+     */
+    public function likedReviews(): BelongsToMany
+    {
+        return $this->belongsToMany(Review::class, 'review_likes', 'user_id', 'review_id')
+            ->withPivot('created_at');
+    }
+
+    /**
+     * Users who follow this user.
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function followers(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'follows', 'following_id', 'follower_id')
+            ->withPivot('created_at');
+    }
+
+    /**
+     * Users whom this user follows.
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function following(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'follows', 'follower_id', 'following_id')
+            ->withPivot('created_at');
     }
 }

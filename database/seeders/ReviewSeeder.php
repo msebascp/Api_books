@@ -1,44 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\Review;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
-class ReviewBookSeeder extends Seeder
+class ReviewSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        DB::table('reviews')->insert([
+        $reviews = [
             [
                 'user_id' => 1,
                 'book_id' => 1,
-                'read_book_id' => 1,
+                'rating' => 4.5,
                 'content' => 'Me gustó mucho, Sherlock Holmes es uno de mis personajes favoritos.',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'has_spoilers' => false,
             ],
             [
                 'user_id' => 2,
                 'book_id' => 1,
-                'read_book_id' => 1,
+                'rating' => 5.0,
                 'content' => 'Me encantó este libro, lo recomiendo mucho.',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'has_spoilers' => false,
             ],
             [
                 'user_id' => 3,
                 'book_id' => 1,
-                'read_book_id' => 1,
+                'rating' => 2.0,
                 'content' => 'No me gustó mucho, no lo recomendaría.',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'has_spoilers' => false,
             ],
-        ]);
+        ];
+
+        foreach ($reviews as $reviewData) {
+            Review::create($reviewData);
+        }
     }
 }

@@ -1,19 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
-use App\Models\Category;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Genre;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
-class CategorySeeder extends Seeder
+class GenreSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $categories = [
+        $genres = [
             'Ciencia Ficción',
             'Fantasía',
             'Terror',
@@ -39,8 +41,11 @@ class CategorySeeder extends Seeder
             'Deportes',
         ];
 
-        foreach ($categories as $category) {
-            Category::create(['name' => $category]);
+        foreach ($genres as $genreName) {
+            Genre::create([
+                'name' => $genreName,
+                'slug' => Str::slug($genreName),
+            ]);
         }
     }
 }

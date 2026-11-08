@@ -1,91 +1,89 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\BookController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\CollectBookController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FollowController;
-use App\Http\Controllers\ReadBookController;
+use App\Http\Controllers\GenreController;
+use App\Http\Controllers\LibraryEntryController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\WatchBookController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::controller(AuthController::class)->group(function () {
-        Route::post('/register', 'register')->withoutMiddleware('auth:sanctum');
-        Route::post('/login', 'login')->withoutMiddleware('auth:sanctum');
-        Route::get('/logout', 'logout');
-        Route::get('/check_token', 'checkToken');
-        Route::get('/forgot_password/{email}', 'forgotPassword')->withoutMiddleware('auth:sanctum');
-    });
-    Route::controller(AuthorController::class)->group(function () {
-        Route::get('/authors', 'index');
-        Route::get('/authors/{id}', 'show');
-        Route::post('/authors', 'store');
-        Route::put('/authors/{id}', 'update');
-        Route::delete('/authors/{id}', 'destroy');
-    });
-    Route::controller(BookController::class)->group(function () {
-        Route::get('/books', 'index');
-        Route::get('/books/{id}', 'show');
-        Route::post('/books', 'store');
-        Route::put('/books/{id}', 'update');
-        Route::delete('/books/{id}', 'destroy');
-        Route::get('/books/search/{bookName}', 'search');
-    });
-    Route::controller(CategoryController::class)->group(function () {
-        Route::get('/categories', 'index');
-        Route::get('/categories/{id}', 'show');
-        Route::post('/categories', 'store');
-        Route::put('/categories/{id}', 'update');
-        Route::delete('/categories/{id}', 'destroy');
-    });
-    Route::controller(CommentController::class)->group(function () {
-        Route::get('/comments/review/{review_id}', 'index_review');
-        Route::get('/comments/{id}', 'show');
-        Route::post('/comments', 'store');
-        Route::put('/comments/{id}', 'update');
-        Route::delete('/comments/{id}', 'destroy');
-    });
-    Route::controller(CollectBookController::class)->group(function () {
-        Route::get('/collectionbooks/user/{user_id?}', 'index');
-        Route::get('/collectionbooks/{book_id}', 'store');
-        Route::delete('/collectionbooks/{book_id}', 'destroy');
-    });
-    Route::controller(FollowController::class)->group(function () {
-        Route::get('/follows/followers/{user_id}', 'index_followers');
-        Route::get('/follows/following/{user_id}', 'index_following');
-        Route::get('/follows/{user_id}', 'store');
-        Route::delete('/follows/{user_id}', 'destroy');
-    });
-    Route::controller(ReadBookController::class)->group(function () {
-        Route::get('/readbooks/user/{user_id?}', 'index');
-        Route::get('/readbooks/read/{book_id}', 'store');
-        Route::delete('/readbooks/read/{book_id}', 'destroy');
-        Route::get('/readbooks/book/{book_id}/{user_id?}', 'show');
-        Route::get('/readbooks/like/{book_id}', 'like');
-        Route::delete('/readbooks/like/{book_id}', 'unlike');
-        Route::get('/like_books', 'likeBooks');
-    });
-    Route::controller(ReviewController::class)->group(function () {
-        Route::get('/reviews/user/{user_id?}', 'index_user');
-        Route::get('/reviews/book/{book_id}', 'index_book');
-        Route::get('/reviews/{id}', 'show');
-        Route::post('/reviews', 'store');
-        Route::put('/reviews/{id}', 'update');
-        Route::delete('/reviews/{id}', 'destroy');
-    });
-    Route::controller(UserController::class)->group(function () {
-        Route::get('/users/{user_id?}', 'show');
-        Route::get('/users/search/{username}', 'search');
-    });
-    Route::controller(WatchBookController::class)->group(function () {
-        Route::get('/watchbooks/user/{user_id?}', 'index');
-        Route::get('/watchbooks/{book_id}', 'store');
-        Route::delete('/watchbooks/{book_id}', 'destroy');
+/*
+|--------------------------------------------------------------------------
+| Rutas Públicas
+|--------------------------------------------------------------------------
+*/
+
+// Autenticación
+Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
+Route::post('/login', [AuthController::class, 'login'])->name('auth.login');
+
+// Catálogo
+Route::get('/books', [BookController::class, 'index'])->name('books.index');
+Route::get('/books/{book}', [BookController::class, 'show'])->whereNumber('book')->name('books.show');
+
+Route::get('/authors', [AuthorController::class, 'index'])->name('authors.index');
+Route::get('/authors/{author}', [AuthorController::class, 'show'])->whereNumber('author')->name('authors.show');
+
+Route::get('/genres', [GenreController::class, 'index'])->name('genres.index');
+Route::get('/genres/{genre}', [GenreController::class, 'show'])->whereNumber('genre')->name('genres.show');
+
+// Social de lectura
+Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.feed');
+Route::get('/reviews/{review}', [ReviewController::class, 'show'])->whereNumber('review')->name('reviews.show');
+Route::get('/books/{book}/reviews', [ReviewController::class, 'index'])->whereNumber('book')->name('books.reviews.index');
+Route::get('/reviews/{review}/comments', [CommentController::class, 'index'])->whereNumber('review')->name('reviews.comments.index');
+
+Route::get('/users/{username}', [UserController::class, 'show'])->name('users.show');
+Route::get('/users/{user}/followers', [FollowController::class, 'followers'])->name('users.followers');
+Route::get('/users/{user}/following', [FollowController::class, 'following'])->name('users.following');
+
+/*
+|--------------------------------------------------------------------------
+| Rutas Protegidas (Sanctum)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->group(function (): void {
+    // Sesión y perfil autenticado
+    Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
+    Route::get('/me', [AuthController::class, 'me'])->name('auth.me');
+
+    // Mi Biblioteca
+    Route::get('/library-entries', [LibraryEntryController::class, 'index'])->name('library-entries.index');
+    Route::post('/library-entries', [LibraryEntryController::class, 'storeOrUpdate'])->name('library-entries.store');
+    Route::delete('/library-entries/{book}', [LibraryEntryController::class, 'destroy'])->whereNumber('book')->name('library-entries.destroy');
+
+    // Interacciones sobre reseñas
+    Route::post('/books/{book}/reviews', [ReviewController::class, 'store'])->whereNumber('book')->name('books.reviews.store');
+    Route::put('/reviews/{review}', [ReviewController::class, 'update'])->whereNumber('review')->name('reviews.update');
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->whereNumber('review')->name('reviews.destroy');
+    Route::post('/reviews/{review}/like', [ReviewController::class, 'toggleLike'])->whereNumber('review')->name('reviews.like');
+
+    // Comentarios
+    Route::post('/reviews/{review}/comments', [CommentController::class, 'store'])->whereNumber('review')->name('reviews.comments.store');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->whereNumber('comment')->name('comments.destroy');
+
+    // Social
+    Route::post('/users/{user}/follow', [FollowController::class, 'toggleFollow'])->name('users.follow');
+
+    // Gestión de Catálogo (Rol Admin)
+    Route::middleware('admin')->group(function (): void {
+        Route::post('/books', [BookController::class, 'store'])->name('books.store');
+        Route::put('/books/{book}', [BookController::class, 'update'])->whereNumber('book')->name('books.update');
+        Route::delete('/books/{book}', [BookController::class, 'destroy'])->whereNumber('book')->name('books.destroy');
+
+        Route::post('/authors', [AuthorController::class, 'store'])->name('authors.store');
+        Route::put('/authors/{author}', [AuthorController::class, 'update'])->whereNumber('author')->name('authors.update');
+        Route::delete('/authors/{author}', [AuthorController::class, 'destroy'])->whereNumber('author')->name('authors.destroy');
+
+        Route::post('/genres', [GenreController::class, 'store'])->name('genres.store');
+        Route::put('/genres/{genre}', [GenreController::class, 'update'])->whereNumber('genre')->name('genres.update');
+        Route::delete('/genres/{genre}', [GenreController::class, 'destroy'])->whereNumber('genre')->name('genres.destroy');
     });
 });
-

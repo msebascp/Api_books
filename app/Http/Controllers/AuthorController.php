@@ -1,120 +1,65 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreAuthorRequest;
+use App\Http\Requests\UpdateAuthorRequest;
+use App\Http\Resources\AuthorResource;
 use App\Models\Author;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 class AuthorController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
-        try {
-            $authors = Author::all();
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error getting authors',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-        return response()->json([
-            'success' => true,
-            'message' => 'All authors',
-            'data' => $authors
-        ]);
+        $authors = Author::query()
+            ->withCount('books')
+            ->when(
+                $request->filled('search'),
+                fn (Builder $query): Builder => $query->where('name', 'like', '%'.$request->string('search').'%')
+            )
+            ->orderBy('name')
+            ->paginate($request->integer('per_page', 15));
+
+        return AuthorResource::collection($authors);
     }
 
-    public function store(Request $request): JsonResponse
+    public function show(Author $author): AuthorResource
     {
-        $request->validate([
-            'name' => 'required|string'
-        ]);
-        try {
-            $author = new Author();
-            $author->name = $request->get('name');
-            $author->save();
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error creating author',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-        return response()->json([
-            'success' => true,
-            'message' => 'Author created',
-            'data' => $author
-        ]);
+        $author->load(['books.genres'])->loadCount('books');
+
+        return new AuthorResource($author);
     }
 
-    public function show(string $id): JsonResponse
+    public function store(StoreAuthorRequest $request): AuthorResource
     {
-        $author = Author::find($id);
-        if ($author === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Author not found'
-            ], 404);
-        }
-        return response()->json([
-            'success' => true,
-            'message' => 'Author found',
-            'data' => $author
-        ]);
+        $author = Author::create($request->validated());
+
+        return new AuthorResource($author);
     }
 
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateAuthorRequest $request, Author $author): AuthorResource
     {
-        $request->validate([
-            'name' => 'required|string'
-        ]);
-        $author = Author::find($id);
-        if ($author === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Author not found'
-            ], 404);
-        }
-        try {
-            $author->name = $request->get('name');
-            $author->save();
-            return response()->json([
-                'success' => true,
-                'message' => 'Author updated',
-                'data' => $author
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating author',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $author->update($request->validated());
+
+        return new AuthorResource($author);
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Author $author): JsonResponse
     {
-        $author = Author::find($id);
-        if ($author === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Author not found'
-            ], 404);
-        }
-        try {
+        DB::transaction(function () use ($author): void {
+            $author->books()->detach();
             $author->delete();
-            return response()->json([
-                'success' => true,
-                'message' => 'Author deleted'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error deleting author',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        });
+
+        return response()->json([
+            'message' => 'Autor eliminado correctamente.',
+        ]);
     }
 }

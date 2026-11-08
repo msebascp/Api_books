@@ -1,164 +1,102 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use App\Models\ReadBook;
+use App\Http\Requests\StoreReviewRequest;
+use App\Http\Requests\UpdateReviewRequest;
+use App\Http\Resources\ReviewResource;
+use App\Models\Book;
 use App\Models\Review;
 use App\Models\User;
-use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Symfony\Component\HttpFoundation\Response;
 
 class ReviewController extends Controller
 {
-    public function index_user(?string $user_id = null): JsonResponse
+    public function index(Request $request, ?Book $book = null): AnonymousResourceCollection
     {
-        try {
-            if ($user_id == null) {
-                $user = auth()->user();
-            } else {
-                $user = User::findOrFail($user_id);
-            }
-            $reviews = $user->reviews;
-            //cargar relaciones de book
-            $reviews->load('book');
+        $relations = $book !== null ? ['user'] : ['user', 'book'];
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Reviews of user',
-                'data' => $reviews
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error fetching reviews',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $reviews = Review::query()
+            ->with($relations)
+            ->withCount(['likes', 'comments'])
+            ->when(
+                $book !== null,
+                fn (Builder $query): Builder => $query->where('book_id', $book->id)
+            )
+            ->latest()
+            ->paginate($request->integer('per_page', 15));
+
+        return ReviewResource::collection($reviews);
     }
 
-    public function index_book($book_id): JsonResponse
+    public function show(Review $review): ReviewResource
     {
-        try {
-            $reviews = Review::where('book_id', $book_id)->get();
-            $reviews->load(['user']);
+        $review->load(['user', 'book', 'comments.user'])->loadCount(['likes', 'comments']);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Reviews of book',
-                'data' => $reviews
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error fetching reviews',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return new ReviewResource($review);
     }
 
-    public function show($id): JsonResponse
+    public function store(StoreReviewRequest $request, Book $book): ReviewResource
     {
-        try {
-            $review = Review::find($id);
-            if ($review->has('comments')) {
-                $review->load('comments');
-            } else {
-                $review->comments = [];
-            }
-            $review->load(['book', 'user']);
-            return response()->json([
-                'success' => true,
-                'message' => 'Review',
-                'data' => $review
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error fetching review',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+        /** @var User $user */
+        $user = $request->user();
+        $validated = $request->validated();
 
-    public function store(Request $request): JsonResponse
-    {
-        $request->validate([
-            'book_id' => 'required',
-            'review' => 'required'
+        $review = Review::create([
+            'user_id' => $user->id,
+            'book_id' => $book->id,
+            'rating' => $validated['rating'],
+            'content' => $validated['content'] ?? null,
+            'has_spoilers' => $validated['has_spoilers'] ?? false,
         ]);
-        $user = auth()->user();
-        $read_book_id = ReadBook::where('user_id', $user->id)->where('book_id', $request->book_id)->first()->id;
-        try {
-            $review = Review::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'book_id' => $request->book_id
-                ],
-                [
-                    'user_id' => $user->id,
-                    'book_id' => $request->book_id,
-                    'read_book_id' => $read_book_id,
-                    'content' => $request->review
-                ]);
-            return response()->json([
-                'success' => true,
-                'message' => 'Review created',
-                'data' => $review
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error creating review',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+
+        $review->load('user')->loadCount(['likes', 'comments']);
+
+        return new ReviewResource($review);
     }
 
-    public function update(Request $request, $id): JsonResponse
+    public function update(UpdateReviewRequest $request, Review $review): ReviewResource
     {
-        $request->validate([
-            'book_id' => 'required',
-            'review' => 'required'
+        $review->update($request->validated());
+        $review->load('user')->loadCount(['likes', 'comments']);
+
+        return new ReviewResource($review);
+    }
+
+    public function destroy(Request $request, Review $review): JsonResponse
+    {
+        abort_unless(
+            $request->user()?->id === $review->user_id,
+            Response::HTTP_FORBIDDEN,
+            'No tienes permiso para eliminar esta reseña.'
+        );
+
+        $review->delete();
+
+        return response()->json([
+            'message' => 'Reseña eliminada correctamente.',
         ]);
-        $user = auth()->user();
-        try {
-            $review = Review::find($id);
-            $review->update([
-                'user_id' => $user->id,
-                'book_id' => $request->book_id,
-                'content' => $request->review
-            ]);
-            return response()->json([
-                'success' => true,
-                'message' => 'Review updated',
-                'data' => $review
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating review',
-                'error' => $e->getMessage()
-            ], 500);
-        }
     }
 
-    public function destroy($id): JsonResponse
+    public function toggleLike(Request $request, Review $review): ReviewResource
     {
-        try {
-            $review = Review::find($id);
-            $review->delete();
-            return response()->json([
-                'success' => true,
-                'message' => 'Review deleted',
-                'data' => $review
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error deleting review',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        /** @var User $user */
+        $user = $request->user();
+
+        $changes = $review->likes()->toggle($user->id);
+        $liked = count($changes['attached']) > 0;
+
+        $review->load('user')->loadCount(['likes', 'comments']);
+
+        return (new ReviewResource($review))->additional([
+            'liked' => $liked,
+            'message' => $liked ? 'Like añadido a la reseña.' : 'Like eliminado de la reseña.',
+        ]);
     }
 }

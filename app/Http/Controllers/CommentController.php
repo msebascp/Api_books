@@ -1,130 +1,59 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCommentRequest;
+use App\Http\Resources\CommentResource;
 use App\Models\Comment;
 use App\Models\Review;
-use Exception;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Symfony\Component\HttpFoundation\Response;
 
 class CommentController extends Controller
 {
-    public function index_review(string $review_id): JsonResponse
+    public function index(Request $request, Review $review): AnonymousResourceCollection
     {
-        try {
-            $comments = Review::findOrFail($review_id)->comments;
-            $comments->load('user');
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Comments not found',
-                'error' => $e->getMessage()
-            ], 404);
-        }
+        $comments = $review->comments()
+            ->with('user')
+            ->oldest()
+            ->paginate($request->integer('per_page', 20));
+
+        return CommentResource::collection($comments);
+    }
+
+    public function store(StoreCommentRequest $request, Review $review): CommentResource
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $comment = Comment::create([
+            'user_id' => $user->id,
+            'review_id' => $review->id,
+            'content' => (string) $request->validated('content'),
+        ]);
+
+        $comment->load('user');
+
+        return new CommentResource($comment);
+    }
+
+    public function destroy(Request $request, Comment $comment): JsonResponse
+    {
+        abort_unless(
+            $request->user()?->id === $comment->user_id,
+            Response::HTTP_FORBIDDEN,
+            'No tienes permiso para eliminar este comentario.'
+        );
+
+        $comment->delete();
+
         return response()->json([
-            'success' => true,
-            'message' => 'Comments',
-            'data' => $comments
+            'message' => 'Comentario eliminado correctamente.',
         ]);
-    }
-
-    public function store(Request $request): JsonResponse
-    {
-        $request->validate([
-            'review_id' => 'required|integer',
-            'comment' => 'required|string'
-        ]);
-        try {
-            $comment = new Comment();
-            $comment->user_id = auth()->user()->id;
-            $comment->review_id = $request->get('review_id');
-            $comment->content = $request->get('comment');
-            $comment->load('user');
-            $comment->save();
-            return response()->json([
-                'success' => true,
-                'message' => 'Comment created',
-                'data' => $comment
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error creating comment',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function show(string $id): JsonResponse
-    {
-        $comment = Comment::with(['user'])->find($id);
-        if ($comment === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Comment not found'
-            ], 404);
-        }
-        return response()->json([
-            'success' => true,
-            'message' => 'Comment',
-            'data' => $comment
-        ]);
-    }
-
-    public function update(Request $request, string $id): JsonResponse
-    {
-        $request->validate([
-            'comment' => 'required|string'
-        ]);
-        $comment = Comment::find($id);
-        if ($comment === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Comment not found'
-            ], 404);
-        }
-        try {
-            $comment->update([
-                'user_id' => auth()->user()->id,
-                'book_id' => $request->get('book_id'),
-                'content' => $request->get('comment')
-            ]);
-            return response()->json([
-                'success' => true,
-                'message' => 'Comment updated',
-                'data' => $comment
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating comment',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function destroy(string $id): JsonResponse
-    {
-        $comment = Comment::find($id);
-        if ($comment === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Comment not found'
-            ], 404);
-        }
-        try {
-            $comment->delete();
-            return response()->json([
-                'success' => true,
-                'message' => 'Comment deleted'
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error deleting comment',
-                'error' => $e->getMessage()
-            ], 500);
-        }
     }
 }

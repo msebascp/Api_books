@@ -1,101 +1,76 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Symfony\Component\HttpFoundation\Response;
 
 class FollowController extends Controller
 {
-    public function index_followers(string $user_id)
+    public function followers(Request $request, string $user): AnonymousResourceCollection
     {
-        try {
-            $user = User::find($user_id);
-            if ($user == null) {
-                return response()->json([
-                    "success" => false,
-                    "message" => "User not found"
-                ]);
-            }
-            $followers = $user->followers;
-            return response()->json([
-                "success" => true,
-                "message" => "Followers list",
-                "data" => $followers
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                "success" => false,
-                "message" => "User not found"
-            ]);
-        }
+        $targetUser = $this->resolveUser($user);
+
+        $followers = $targetUser->followers()
+            ->withCount(['libraryEntries', 'reviews', 'followers', 'following'])
+            ->paginate($request->integer('per_page', 20));
+
+        return UserResource::collection($followers);
     }
 
-    public function index_following(string $user_id)
+    public function following(Request $request, string $user): AnonymousResourceCollection
     {
-        try {
-            $user = User::find($user_id);
-            if ($user == null) {
-                return response()->json([
-                    "success" => false,
-                    "message" => "User not found"
-                ]);
-            }
-            $following = $user->following;
-            return response()->json([
-                "success" => true,
-                "message" => "Following list",
-                "data" => $following
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                "success" => false,
-                "message" => "User not found"
-            ]);
-        }
+        $targetUser = $this->resolveUser($user);
+
+        $following = $targetUser->following()
+            ->withCount(['libraryEntries', 'reviews', 'followers', 'following'])
+            ->paginate($request->integer('per_page', 20));
+
+        return UserResource::collection($following);
     }
 
-    public function store(string $user_id)
+    public function toggleFollow(Request $request, string $user): JsonResponse
     {
-        try {
-            $me = auth()->user();
-            $me->following()->attach($user_id);
-            $user = User::find($user_id);
-            $user->isMe = $me->id == $user_id;
-            // Comprobar si el usuario autenticado sigue al usuario solicitado
-            $user->isFollowing = $me->following->contains($user_id);
+        /** @var User $me */
+        $me = $request->user();
+        $targetUser = $this->resolveUser($user);
+
+        if ($me->id === $targetUser->id) {
             return response()->json([
-                "success" => true,
-                "message" => "Followed successfully",
-                "data" => $user
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                "success" => false,
-                "message" => "Already followed",
-            ]);
+                'message' => 'No puedes seguirte a ti mismo.',
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
+
+        $changes = $me->following()->toggle($targetUser->id);
+        $following = count($changes['attached']) > 0;
+
+        $targetUser->loadCount(['libraryEntries', 'reviews', 'followers', 'following']);
+
+        return (new UserResource($targetUser))
+            ->additional([
+                'following' => $following,
+                'message' => $following
+                    ? 'Ahora sigues a este usuario.'
+                    : 'Has dejado de seguir a este usuario.',
+            ])
+            ->response();
     }
 
-    public function destroy(string $user_id)
+    private function resolveUser(string $identifier): User
     {
-        try {
-            $me = auth()->user();
-            $me->following()->detach($user_id);
-            $user = User::find($user_id);
-            $user->isMe = $me->id == $user_id;
-            // Comprobar si el usuario autenticado sigue al usuario solicitado
-            $user->isFollowing = $me->following->contains($user_id);
-            return response()->json([
-                "success" => true,
-                "message" => "Unfollowed successfully",
-                "data" => $user
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                "success" => false,
-                "message" => "Not followed yet"
-            ]);
-        }
+        return User::query()
+            ->where('username', $identifier)
+            ->when(
+                ctype_digit($identifier),
+                fn (Builder $query): Builder => $query->orWhere('id', (int) $identifier)
+            )
+            ->firstOrFail();
     }
 }

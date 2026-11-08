@@ -1,184 +1,130 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use App\Mail\ForgotPassword;
+use App\Http\Requests\IndexBookRequest;
+use App\Http\Requests\StoreBookRequest;
+use App\Http\Requests\UpdateBookRequest;
+use App\Http\Resources\BookResource;
 use App\Models\Book;
-use App\Models\CollectBook;
-use App\Models\ReadBook;
-use App\Models\WatchBook;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class BookController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(IndexBookRequest $request): AnonymousResourceCollection
     {
-        try {
-            $books = Book::all();
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error getting books',
-                'error' => $e->getMessage()
-            ], 500);
+        $validated = $request->validated();
+
+        $query = Book::query()
+            ->with(['authors', 'genres'])
+            ->withCount(['libraryEntries', 'reviews']);
+
+        if (! empty($validated['search'])) {
+            $search = (string) $validated['search'];
+            $query->where(function (Builder $q) use ($search): void {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('isbn', 'like', "%{$search}%");
+            });
         }
-        return response()->json([
-            'success' => true,
-            'message' => 'All books',
-            'data' => $books
-        ]);
+
+        if (! empty($validated['genre'])) {
+            $genre = (string) $validated['genre'];
+            $query->whereHas('genres', function (Builder $q) use ($genre): void {
+                if (ctype_digit($genre)) {
+                    $q->where('genres.id', (int) $genre);
+                } else {
+                    $q->where('genres.slug', $genre);
+                }
+            });
+        }
+
+        if (! empty($validated['author'])) {
+            $author = (string) $validated['author'];
+            $query->whereHas('authors', function (Builder $q) use ($author): void {
+                if (ctype_digit($author)) {
+                    $q->where('authors.id', (int) $author);
+                } else {
+                    $q->where('authors.name', 'like', "%{$author}%");
+                }
+            });
+        }
+
+        $sort = $validated['sort'] ?? 'latest';
+
+        match ($sort) {
+            'avg_rating' => $query->orderByDesc('avg_rating')->orderByDesc('ratings_count'),
+            'title' => $query->orderBy('title'),
+            'publication_date' => $query->orderByDesc('publication_date')->orderByDesc('id'),
+            default => $query->orderByDesc('created_at')->orderByDesc('id'),
+        };
+
+        $perPage = (int) ($validated['per_page'] ?? 15);
+
+        return BookResource::collection($query->paginate($perPage));
     }
 
-    public function store(Request $request): JsonResponse
+    public function show(Book $book): BookResource
     {
-        $request->validate([
-            'name' => 'required|string',
-            'description' => 'required|string',
-            'image_path' => 'nullable|string'
-        ]);
-        try {
-            $book = new Book();
-            $book->name = $request->name;
-            $book->description = $request->description;
-            $book->image_path = $request->image_path;
-            $book->save();
-            if ($request->has('authors')) {
-                $authors = $request->authors;
-                unset($request['authors']);
-                $book->authors()->attach($authors);
-            }
-            if ($request->has('categories')) {
-                $categories = $request->categories;
-                unset($request['categories']);
-                $book->categories()->attach($categories);
-            }
-            $book->save();
-            return response()->json([
-                'success' => true,
-                'message' => 'Book created',
-                'data' => $book
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error creating book',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $book->load(['authors', 'genres'])->loadCount(['libraryEntries', 'reviews']);
+
+        return new BookResource($book);
     }
 
-    /**
-     * Devuelve la información básica de un libro,
-     * incluyendo los autores y categorías asociados a él.
-     * Además, se indica si el usuario autenticado ha leído el libro,
-     * si lo tiene en su watchlist y si lo tiene en su colección.
-     * @param string $id
-     * @return JsonResponse
-     */
-    public function show(string $id): JsonResponse
+    public function store(StoreBookRequest $request): BookResource
     {
-        $book = Book::with(['authors:id,name', 'categories:id,name', 'reviews.user'])->find($id);
-        if ($book === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Book not found'
-            ], 404);
-        }
-        if (ReadBook::where('user_id', auth()->id())->where('book_id', $id)->exists()) {
-            $book->is_read = true;
-            $is_like = ReadBook::where('user_id', auth()->id())->where('book_id', $id)->value('is_like');
-            $book->is_like = boolval($is_like);
-        } else {
-            $book->is_read = false;
-            $book->is_like = false;
-        }
-        $book->in_watchlist = WatchBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
-        $book->in_collectionlist = CollectBook::where('user_id', auth()->id())->where('book_id', $id)->exists();
-        return response()->json([
-            'success' => true,
-            'message' => 'Book found',
-            'data' => $book
-        ]);
+        $validated = $request->validated();
+
+        $book = DB::transaction(function () use ($validated): Book {
+            $book = Book::create(Arr::except($validated, ['authors', 'genres']));
+
+            $book->authors()->sync($validated['authors'] ?? []);
+            $book->genres()->sync($validated['genres'] ?? []);
+
+            return $book;
+        });
+
+        $book->load(['authors', 'genres'])->loadCount(['libraryEntries', 'reviews']);
+
+        return new BookResource($book);
     }
 
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateBookRequest $request, Book $book): BookResource
     {
-        $request->validate([
-            'name' => 'required|string',
-            'description' => 'required|string',
-            'image_path' => 'nullable|string'
-        ]);
-        $book = Book::find($id);
-        if ($book === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Book not found'
-            ], 404);
-        }
-        try {
-            $book->update($request->all());
-            if ($request->has('authors')) {
-                $book->authors()->sync($request->authors);
+        $validated = $request->validated();
+
+        DB::transaction(function () use ($book, $validated): void {
+            $book->update(Arr::except($validated, ['authors', 'genres']));
+
+            if (array_key_exists('authors', $validated)) {
+                $book->authors()->sync($validated['authors']);
             }
-            if ($request->has('categories')) {
-                $book->categories()->sync($request->categories);
+
+            if (array_key_exists('genres', $validated)) {
+                $book->genres()->sync($validated['genres']);
             }
-            return response()->json([
-                'success' => true,
-                'message' => 'Book updated',
-                'data' => $book
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating book',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        });
+
+        $book->load(['authors', 'genres'])->loadCount(['libraryEntries', 'reviews']);
+
+        return new BookResource($book);
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Book $book): JsonResponse
     {
-        $book = Book::find($id);
-        if ($book === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Book not found'
-            ], 404);
-        }
-        try {
+        DB::transaction(function () use ($book): void {
+            $book->authors()->detach();
+            $book->genres()->detach();
             $book->delete();
-            return response()->json([
-                'success' => true,
-                'message' => 'Book deleted'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error deleting book',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+        });
 
-    public function search(string $bookName): JsonResponse
-    {
-        try {
-            $books = Book::where('name', 'like', '%' . $bookName . '%')->get();
-            return response()->json([
-                'success' => true,
-                'message' => 'Books found',
-                'data' => $books
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error searching books',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'Libro eliminado correctamente.',
+        ]);
     }
 }

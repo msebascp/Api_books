@@ -127,4 +127,18 @@ class BookController extends Controller
             'message' => 'Libro eliminado correctamente.',
         ]);
     }
+
+    public function restore(Request $request, Book $book): BookResource
+    {
+        if ($book->trashed()) {
+            $book->restore();
+        }
+
+        $book->load(['authors', 'genres', ...Book::reactionEagerLoads($this->viewer($request))])
+            ->loadCount(['libraryEntries', 'reviews']);
+
+        return (new BookResource($book))->additional([
+            'message' => 'Libro restaurado correctamente.',
+        ]);
+    }
 }

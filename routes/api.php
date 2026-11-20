@@ -10,6 +10,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\GenreController;
 use App\Http\Controllers\LibraryEntryController;
+use App\Http\Controllers\ReadingLogController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,7 @@ Route::get('/books/{book}/reviews', [ReviewController::class, 'index'])->whereNu
 Route::get('/reviews/{review}/comments', [CommentController::class, 'index'])->whereNumber('review')->name('reviews.comments.index');
 
 Route::get('/users/{username}', [UserController::class, 'show'])->name('users.show');
+Route::get('/users/{username}/reading-logs', [ReadingLogController::class, 'userIndex'])->name('users.reading-logs.index');
 Route::get('/users/{user}/followers', [FollowController::class, 'followers'])->name('users.followers');
 Route::get('/users/{user}/following', [FollowController::class, 'following'])->name('users.following');
 
@@ -59,6 +61,12 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/library-entries', [LibraryEntryController::class, 'index'])->name('library-entries.index');
     Route::post('/library-entries', [LibraryEntryController::class, 'storeOrUpdate'])->name('library-entries.store');
     Route::delete('/library-entries/{book}', [LibraryEntryController::class, 'destroy'])->whereNumber('book')->name('library-entries.destroy');
+
+    // Historial de lecturas y relecturas (Diary / Plays)
+    Route::get('/reading-logs', [ReadingLogController::class, 'index'])->name('reading-logs.index');
+    Route::post('/books/{book}/reading-logs', [ReadingLogController::class, 'store'])->whereNumber('book')->name('books.reading-logs.store');
+    Route::put('/reading-logs/{readingLog}', [ReadingLogController::class, 'update'])->whereNumber('readingLog')->name('reading-logs.update');
+    Route::delete('/reading-logs/{readingLog}', [ReadingLogController::class, 'destroy'])->whereNumber('readingLog')->name('reading-logs.destroy');
 
     // Interacciones sobre reseñas
     Route::post('/books/{book}/reviews', [ReviewController::class, 'store'])->whereNumber('book')->name('books.reviews.store');
@@ -81,6 +89,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/books', [BookController::class, 'store'])->name('books.store');
         Route::put('/books/{book}', [BookController::class, 'update'])->whereNumber('book')->name('books.update');
         Route::delete('/books/{book}', [BookController::class, 'destroy'])->whereNumber('book')->name('books.destroy');
+        Route::post('/books/{book}/restore', [BookController::class, 'restore'])->whereNumber('book')->withTrashed()->name('books.restore');
 
         Route::post('/authors', [AuthorController::class, 'store'])->name('authors.store');
         Route::put('/authors/{author}', [AuthorController::class, 'update'])->whereNumber('author')->name('authors.update');

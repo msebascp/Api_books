@@ -24,6 +24,7 @@ class LibraryEntryFactory extends Factory
     {
         /** @var ReadingStatus $status */
         $status = fake()->randomElement(ReadingStatus::cases());
+        $isRead = $status === ReadingStatus::Read;
 
         return [
             'user_id' => User::factory(),
@@ -31,7 +32,8 @@ class LibraryEntryFactory extends Factory
             'status' => $status,
             'is_owned' => fake()->boolean(30),
             'is_favorite' => fake()->boolean(20),
-            'read_at' => $status === ReadingStatus::Read ? now() : null,
+            'read_count' => $isRead ? 1 : 0,
+            'last_read_at' => $isRead ? now()->toDateString() : null,
         ];
     }
 
@@ -39,7 +41,8 @@ class LibraryEntryFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'status' => ReadingStatus::Read,
-            'read_at' => now(),
+            'read_count' => 1,
+            'last_read_at' => now()->toDateString(),
         ]);
     }
 
@@ -47,7 +50,8 @@ class LibraryEntryFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'status' => ReadingStatus::ToRead,
-            'read_at' => null,
+            'read_count' => 0,
+            'last_read_at' => null,
         ]);
     }
 
@@ -55,7 +59,8 @@ class LibraryEntryFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'status' => ReadingStatus::Reading,
-            'read_at' => null,
+            'read_count' => 0,
+            'last_read_at' => null,
         ]);
     }
 
@@ -63,7 +68,8 @@ class LibraryEntryFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'status' => ReadingStatus::Dnf,
-            'read_at' => null,
+            'read_count' => 0,
+            'last_read_at' => null,
         ]);
     }
 }

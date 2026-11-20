@@ -55,11 +55,6 @@ class LibraryEntryRequest extends FormRequest
             ],
             'is_owned' => ['sometimes', 'boolean'],
             'is_favorite' => ['sometimes', 'boolean'],
-            'read_at' => [
-                'nullable',
-                'date',
-                'prohibited_if:status,'.ReadingStatus::ToRead->value,
-            ],
         ];
     }
 }

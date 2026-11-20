@@ -31,19 +31,22 @@ class PersistenceLayerTest extends TestCase
             'status' => ReadingStatus::Read,
             'is_owned' => true,
             'is_favorite' => true,
-            'read_at' => now(),
+            'read_count' => 1,
+            'last_read_at' => '2025-03-10',
         ]);
 
         $this->assertSame(ReadingStatus::Read, $entry->status);
         $this->assertTrue($entry->is_owned);
         $this->assertTrue($entry->is_favorite);
-        $this->assertNotNull($entry->read_at);
+        $this->assertSame(1, $entry->read_count);
+        $this->assertSame('2025-03-10', $entry->last_read_at?->format('Y-m-d'));
 
         $pivotBook = $user->books()->firstOrFail();
         $this->assertSame($book->id, $pivotBook->id);
         $this->assertSame('read', $pivotBook->pivot->status);
         $this->assertEquals(1, $pivotBook->pivot->is_owned);
         $this->assertEquals(1, $pivotBook->pivot->is_favorite);
+        $this->assertEquals(1, $pivotBook->pivot->read_count);
     }
 
     public function test_unique_user_book_constraints_on_library_entries_and_reviews(): void

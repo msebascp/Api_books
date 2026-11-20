@@ -16,6 +16,15 @@ class LibraryEntry extends Model
     use HasFactory;
 
     /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'is_owned' => false,
+        'is_favorite' => false,
+        'read_count' => 0,
+    ];
+
+    /**
      * @var list<string>
      */
     protected $fillable = [
@@ -24,7 +33,6 @@ class LibraryEntry extends Model
         'status',
         'is_owned',
         'is_favorite',
-        'read_at',
     ];
 
     /**
@@ -36,7 +44,8 @@ class LibraryEntry extends Model
             'status' => ReadingStatus::class,
             'is_owned' => 'boolean',
             'is_favorite' => 'boolean',
-            'read_at' => 'date',
+            'read_count' => 'integer',
+            'last_read_at' => 'date',
         ];
     }
 
@@ -53,6 +62,6 @@ class LibraryEntry extends Model
      */
     public function book(): BelongsTo
     {
-        return $this->belongsTo(Book::class);
+        return $this->belongsTo(Book::class)->withTrashed();
     }
 }

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Observers\UserObserver;
+use Closure;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -72,8 +74,16 @@ class User extends Authenticatable
     public function books(): BelongsToMany
     {
         return $this->belongsToMany(Book::class, 'library_entries')
-            ->withPivot(['status', 'is_owned', 'is_favorite', 'read_at'])
+            ->withPivot(['status', 'is_owned', 'is_favorite', 'read_count', 'last_read_at'])
             ->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<ReadingLog, $this>
+     */
+    public function readingLogs(): HasMany
+    {
+        return $this->hasMany(ReadingLog::class);
     }
 
     /**
@@ -129,5 +139,19 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(self::class, 'follows', 'follower_id', 'following_id')
             ->withPivot('created_at');
+    }
+
+    /**
+     * Restricción withExists/loadExists para saber si el viewer sigue al usuario.
+     *
+     * @return array<string, Closure>
+     */
+    public static function viewerFollowExistsConstraint(self $viewer): array
+    {
+        return [
+            'followers as followed_by_viewer' => static function (Builder $query) use ($viewer): void {
+                $query->where('follows.follower_id', $viewer->getKey());
+            },
+        ];
     }
 }

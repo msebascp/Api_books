@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Enums\ReadingStatus;
 use App\Models\LibraryEntry;
+use App\Models\ReadingLog;
 use Illuminate\Database\Seeder;
 
 class LibraryEntrySeeder extends Seeder
@@ -17,32 +18,43 @@ class LibraryEntrySeeder extends Seeder
     {
         $entries = [
             // Curated read entries migrated from ReadBookSeeder
-            ['user_id' => 1, 'book_id' => 1, 'status' => ReadingStatus::Read, 'is_owned' => true, 'is_favorite' => true, 'read_at' => now()],
-            ['user_id' => 2, 'book_id' => 1, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => false, 'read_at' => now()],
-            ['user_id' => 3, 'book_id' => 1, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => true, 'read_at' => now()],
+            ['user_id' => 1, 'book_id' => 1, 'status' => ReadingStatus::Read, 'is_owned' => true, 'is_favorite' => true],
+            ['user_id' => 2, 'book_id' => 1, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => false],
+            ['user_id' => 3, 'book_id' => 1, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => true],
 
-            ['user_id' => 1, 'book_id' => 2, 'status' => ReadingStatus::Read, 'is_owned' => true, 'is_favorite' => true, 'read_at' => now()],
-            ['user_id' => 2, 'book_id' => 2, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => false, 'read_at' => now()],
-            ['user_id' => 3, 'book_id' => 2, 'status' => ReadingStatus::Read, 'is_owned' => true, 'is_favorite' => true, 'read_at' => now()],
+            ['user_id' => 1, 'book_id' => 2, 'status' => ReadingStatus::Read, 'is_owned' => true, 'is_favorite' => true],
+            ['user_id' => 2, 'book_id' => 2, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => false],
+            ['user_id' => 3, 'book_id' => 2, 'status' => ReadingStatus::Read, 'is_owned' => true, 'is_favorite' => true],
 
-            ['user_id' => 1, 'book_id' => 3, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => true, 'read_at' => now()],
-            ['user_id' => 2, 'book_id' => 3, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => false, 'read_at' => now()],
-            ['user_id' => 3, 'book_id' => 3, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => true, 'read_at' => now()],
+            ['user_id' => 1, 'book_id' => 3, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => true],
+            ['user_id' => 2, 'book_id' => 3, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => false],
+            ['user_id' => 3, 'book_id' => 3, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => true],
 
-            ['user_id' => 1, 'book_id' => 4, 'status' => ReadingStatus::Read, 'is_owned' => true, 'is_favorite' => true, 'read_at' => now()],
-            ['user_id' => 2, 'book_id' => 4, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => false, 'read_at' => now()],
-            ['user_id' => 3, 'book_id' => 4, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => true, 'read_at' => now()],
+            ['user_id' => 1, 'book_id' => 4, 'status' => ReadingStatus::Read, 'is_owned' => true, 'is_favorite' => true],
+            ['user_id' => 2, 'book_id' => 4, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => false],
+            ['user_id' => 3, 'book_id' => 4, 'status' => ReadingStatus::Read, 'is_owned' => false, 'is_favorite' => true],
 
             // Additional reading states across the unified library_entries model
-            ['user_id' => 1, 'book_id' => 5, 'status' => ReadingStatus::Reading, 'is_owned' => true, 'is_favorite' => false, 'read_at' => null],
-            ['user_id' => 1, 'book_id' => 7, 'status' => ReadingStatus::ToRead, 'is_owned' => false, 'is_favorite' => false, 'read_at' => null],
-            ['user_id' => 4, 'book_id' => 8, 'status' => ReadingStatus::Read, 'is_owned' => true, 'is_favorite' => true, 'read_at' => now()],
-            ['user_id' => 4, 'book_id' => 9, 'status' => ReadingStatus::ToRead, 'is_owned' => true, 'is_favorite' => false, 'read_at' => null],
-            ['user_id' => 2, 'book_id' => 10, 'status' => ReadingStatus::Dnf, 'is_owned' => false, 'is_favorite' => false, 'read_at' => null],
+            ['user_id' => 1, 'book_id' => 5, 'status' => ReadingStatus::Reading, 'is_owned' => true, 'is_favorite' => false],
+            ['user_id' => 1, 'book_id' => 7, 'status' => ReadingStatus::ToRead, 'is_owned' => false, 'is_favorite' => false],
+            ['user_id' => 4, 'book_id' => 8, 'status' => ReadingStatus::Read, 'is_owned' => true, 'is_favorite' => true],
+            ['user_id' => 4, 'book_id' => 9, 'status' => ReadingStatus::ToRead, 'is_owned' => true, 'is_favorite' => false],
+            ['user_id' => 2, 'book_id' => 10, 'status' => ReadingStatus::Dnf, 'is_owned' => false, 'is_favorite' => false],
         ];
+
+        $today = now()->toDateString();
 
         foreach ($entries as $entry) {
             LibraryEntry::create($entry);
+
+            if ($entry['status'] === ReadingStatus::Read) {
+                ReadingLog::create([
+                    'user_id' => $entry['user_id'],
+                    'book_id' => $entry['book_id'],
+                    'finished_at' => $today,
+                    'is_reread' => false,
+                ]);
+            }
         }
     }
 }

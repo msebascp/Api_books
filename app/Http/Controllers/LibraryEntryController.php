@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\ReadingStatus;
 use App\Http\Requests\IndexLibraryEntryRequest;
 use App\Http\Requests\LibraryEntryRequest;
 use App\Http\Resources\LibraryEntryResource;
@@ -39,6 +38,14 @@ class LibraryEntryController extends Controller
             $query->where('is_favorite', $request->boolean('is_favorite'));
         }
 
+        if ($request->has('has_been_read')) {
+            if ($request->boolean('has_been_read')) {
+                $query->where('read_count', '>', 0);
+            } else {
+                $query->where('read_count', 0);
+            }
+        }
+
         $perPage = (int) ($validated['per_page'] ?? 15);
 
         return LibraryEntryResource::collection(
@@ -52,10 +59,6 @@ class LibraryEntryController extends Controller
         $user = $request->user();
         $validated = $request->validated();
         $attributes = Arr::except($validated, ['book_id']);
-
-        if (($attributes['status'] ?? null) === ReadingStatus::ToRead->value) {
-            $attributes['read_at'] = null;
-        }
 
         $entry = $request->existingEntry();
 

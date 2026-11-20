@@ -38,6 +38,7 @@ class BookResource extends JsonResource
             'pages' => $this->pages,
             'avg_rating' => (float) $this->avg_rating,
             'ratings_count' => (int) $this->ratings_count,
+            'is_archived' => $this->trashed(),
             'library_entries_count' => $this->whenCounted('libraryEntries'),
             'reviews_count' => $this->whenCounted('reviews'),
             'reactions' => $this->reactionsPayload(),

@@ -10,11 +10,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Book extends Model
 {
     /** @use HasFactory<BookFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * @var list<string>
@@ -71,8 +72,16 @@ class Book extends Model
     public function readers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'library_entries')
-            ->withPivot(['status', 'is_owned', 'is_favorite', 'read_at'])
+            ->withPivot(['status', 'is_owned', 'is_favorite', 'read_count', 'last_read_at'])
             ->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<ReadingLog, $this>
+     */
+    public function readingLogs(): HasMany
+    {
+        return $this->hasMany(ReadingLog::class);
     }
 
     /**

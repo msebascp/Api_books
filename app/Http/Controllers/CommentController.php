@@ -18,8 +18,14 @@ class CommentController extends Controller
 {
     public function index(Request $request, Review $review): AnonymousResourceCollection
     {
+        $viewer = $this->viewer($request);
+
+        $userRelation = $viewer !== null
+            ? ['user' => static fn ($q) => $q->withExists(User::viewerFollowExistsConstraint($viewer))]
+            : ['user'];
+
         $comments = $review->comments()
-            ->with('user')
+            ->with($userRelation)
             ->oldest()
             ->paginate($request->integer('per_page', 20));
 

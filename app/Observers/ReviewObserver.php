@@ -48,7 +48,7 @@ class ReviewObserver
             ->selectRaw('COUNT(*) as ratings_count, COALESCE(AVG(rating), 0) as avg_rating')
             ->first();
 
-        Book::whereKey($bookId)->update([
+        Book::withTrashed()->whereKey($bookId)->update([
             'ratings_count' => (int) ($stats?->ratings_count ?? 0),
             'avg_rating' => round((float) ($stats?->avg_rating ?? 0.0), 2),
         ]);

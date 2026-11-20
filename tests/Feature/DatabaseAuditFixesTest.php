@@ -140,7 +140,6 @@ class DatabaseAuditFixesTest extends TestCase
             'status' => ReadingStatus::Read,
             'is_owned' => true,
             'is_favorite' => false,
-            'read_at' => '2024-06-15',
         ]);
 
         $reader = $book->readers()->firstOrFail();
@@ -228,32 +227,20 @@ class DatabaseAuditFixesTest extends TestCase
             ->assertJsonPath('data.isbn', '9788437604947');
     }
 
-    public function test_read_at_supports_pre_1970_dates_in_ymd_format_and_enforces_to_read_coherence(): void
+    public function test_library_entry_upsert_executes_single_select_and_reading_log_supports_pre_1970_dates(): void
     {
         $user = User::factory()->create();
         $book = Book::factory()->create();
         Sanctum::actingAs($user);
 
-        // Enviar read_at junto con status = to_read está prohibido -> 422
-        $this->postJson('/api/library-entries', [
-            'book_id' => $book->id,
-            'status' => ReadingStatus::ToRead->value,
-            'read_at' => '1967-05-30',
-        ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['read_at']);
-
-        // Registrar lectura con fecha histórica anterior a 1970 -> formato Y-m-d
-        $this->postJson('/api/library-entries', [
-            'book_id' => $book->id,
-            'status' => ReadingStatus::Read->value,
-            'read_at' => '1967-05-30',
+        // Registrar lectura con fecha histórica anterior a 1970 mediante reading-logs
+        $this->postJson("/api/books/{$book->id}/reading-logs", [
+            'finished_at' => '1967-05-30',
         ])
             ->assertCreated()
-            ->assertJsonPath('data.status', 'read')
-            ->assertJsonPath('data.read_at', '1967-05-30');
+            ->assertJsonPath('data.finished_at', '1967-05-30');
 
-        // Cambiar el estado existente a to_read limpia automáticamente read_at a null
+        // Cambiar el estado existente a to_read conserva read_count y last_read_at
         // y ejecuta solo 1 SELECT sobre library_entries entre validación y controlador
         DB::flushQueryLog();
         DB::enableQueryLog();
@@ -264,7 +251,8 @@ class DatabaseAuditFixesTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('data.status', 'to_read')
-            ->assertJsonPath('data.read_at', null);
+            ->assertJsonPath('data.read_count', 1)
+            ->assertJsonPath('data.last_read_at', '1967-05-30');
 
         $librarySelects = collect(DB::getQueryLog())
             ->filter(static fn (array $q): bool => str_contains(strtolower($q['query']), 'select')

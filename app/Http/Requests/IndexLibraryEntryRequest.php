@@ -24,6 +24,7 @@ class IndexLibraryEntryRequest extends FormRequest
             'status' => ['nullable', Rule::enum(ReadingStatus::class)],
             'is_owned' => ['nullable', 'boolean'],
             'is_favorite' => ['nullable', 'boolean'],
+            'has_been_read' => ['nullable', 'boolean'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }

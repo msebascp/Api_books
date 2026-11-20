@@ -22,17 +22,39 @@ class ReviewController extends Controller
 {
     public function index(Request $request, ?Book $book = null): AnonymousResourceCollection
     {
-        $relations = $book !== null
-            ? ['user']
-            : ['user', 'book', ...Book::reactionEagerLoads($this->viewer($request), 'book.')];
+        $viewer = $this->viewer($request);
 
-        $reviews = Review::query()
+        $userRelation = $viewer !== null
+            ? ['user' => static fn ($q) => $q->withExists(User::viewerFollowExistsConstraint($viewer))]
+            : ['user'];
+
+        $relations = $book !== null
+            ? $userRelation
+            : [...$userRelation, 'book', ...Book::reactionEagerLoads($viewer, 'book.')];
+
+        $query = Review::query()
             ->with($relations)
             ->withCount(['likes', 'comments'])
             ->when(
                 $book !== null,
-                fn (Builder $query): Builder => $query->where('book_id', $book->id)
-            )
+                fn (Builder $q): Builder => $q->where('book_id', $book->id)
+            );
+
+        if ($viewer !== null) {
+            $query->withExists(Review::viewerLikeExistsConstraint($viewer));
+        }
+
+        if ($request->has('has_content')) {
+            if ($request->boolean('has_content')) {
+                $query->whereNotNull('content')->where('content', '<>', '');
+            } else {
+                $query->where(function (Builder $q): void {
+                    $q->whereNull('content')->orWhere('content', '');
+                });
+            }
+        }
+
+        $reviews = $query
             ->latest()
             ->paginate($request->integer('per_page', 15));
 
@@ -41,12 +63,25 @@ class ReviewController extends Controller
 
     public function show(Request $request, Review $review): ReviewResource
     {
-        $review->load([
-            'user',
-            'book',
-            'comments.user',
-            ...Book::reactionEagerLoads($this->viewer($request), 'book.'),
-        ])->loadCount(['likes', 'comments']);
+        $viewer = $this->viewer($request);
+
+        if ($viewer !== null) {
+            $review->load([
+                'user' => static fn ($q) => $q->withExists(User::viewerFollowExistsConstraint($viewer)),
+                'book',
+                'comments.user' => static fn ($q) => $q->withExists(User::viewerFollowExistsConstraint($viewer)),
+                ...Book::reactionEagerLoads($viewer, 'book.'),
+            ])
+                ->loadCount(['likes', 'comments'])
+                ->loadExists(Review::viewerLikeExistsConstraint($viewer));
+        } else {
+            $review->load([
+                'user',
+                'book',
+                'comments.user',
+                ...Book::reactionEagerLoads(null, 'book.'),
+            ])->loadCount(['likes', 'comments']);
+        }
 
         return new ReviewResource($review);
     }
@@ -71,15 +106,22 @@ class ReviewController extends Controller
             ]);
         }
 
-        $review->load('user')->loadCount(['likes', 'comments']);
+        $review->setRelation('user', $user);
+        $review->setAttribute('liked_by_viewer', false);
+        $review->loadCount(['likes', 'comments']);
 
         return new ReviewResource($review);
     }
 
     public function update(UpdateReviewRequest $request, Review $review): ReviewResource
     {
+        /** @var User $user */
+        $user = $request->user();
+
         $review->update($request->validated());
-        $review->load('user')->loadCount(['likes', 'comments']);
+        $review->setRelation('user', $user);
+        $review->loadCount(['likes', 'comments'])
+            ->loadExists(Review::viewerLikeExistsConstraint($user));
 
         return new ReviewResource($review);
     }
@@ -107,7 +149,10 @@ class ReviewController extends Controller
         $changes = $review->likes()->toggle($user->id);
         $liked = count($changes['attached']) > 0;
 
-        $review->load('user')->loadCount(['likes', 'comments']);
+        $review->load([
+            'user' => static fn ($q) => $q->withExists(User::viewerFollowExistsConstraint($user)),
+        ])->loadCount(['likes', 'comments']);
+        $review->setAttribute('liked_by_viewer', $liked);
 
         return (new ReviewResource($review))->additional([
             'liked' => $liked,

@@ -17,23 +17,35 @@ class FollowController extends Controller
     public function followers(Request $request, string $user): AnonymousResourceCollection
     {
         $targetUser = $this->resolveUser($user);
+        $viewer = $this->viewer($request);
 
-        $followers = $targetUser->followers()
-            ->withCount(['libraryEntries', 'reviews', 'followers', 'following'])
-            ->paginate($request->integer('per_page', 20));
+        $query = $targetUser->followers()
+            ->withCount(['libraryEntries', 'reviews', 'followers', 'following']);
 
-        return UserResource::collection($followers);
+        if ($viewer !== null) {
+            $query->withExists(User::viewerFollowExistsConstraint($viewer));
+        }
+
+        return UserResource::collection(
+            $query->paginate($request->integer('per_page', 20))
+        );
     }
 
     public function following(Request $request, string $user): AnonymousResourceCollection
     {
         $targetUser = $this->resolveUser($user);
+        $viewer = $this->viewer($request);
 
-        $following = $targetUser->following()
-            ->withCount(['libraryEntries', 'reviews', 'followers', 'following'])
-            ->paginate($request->integer('per_page', 20));
+        $query = $targetUser->following()
+            ->withCount(['libraryEntries', 'reviews', 'followers', 'following']);
 
-        return UserResource::collection($following);
+        if ($viewer !== null) {
+            $query->withExists(User::viewerFollowExistsConstraint($viewer));
+        }
+
+        return UserResource::collection(
+            $query->paginate($request->integer('per_page', 20))
+        );
     }
 
     public function toggleFollow(Request $request, string $user): JsonResponse
@@ -52,6 +64,7 @@ class FollowController extends Controller
         $following = count($changes['attached']) > 0;
 
         $targetUser->loadCount(['libraryEntries', 'reviews', 'followers', 'following']);
+        $targetUser->setAttribute('followed_by_viewer', $following);
 
         return (new UserResource($targetUser))
             ->additional([

@@ -36,7 +36,7 @@ class LibraryEntry extends Model
             'status' => ReadingStatus::class,
             'is_owned' => 'boolean',
             'is_favorite' => 'boolean',
-            'read_at' => 'datetime',
+            'read_at' => 'date',
         ];
     }
 

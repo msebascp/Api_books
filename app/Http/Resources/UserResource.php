@@ -20,11 +20,15 @@ class UserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $viewer = $request->user('sanctum');
+        $isOwner = ($viewer instanceof User && $viewer->id === $this->id)
+            || $request->routeIs('auth.register', 'auth.login');
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'username' => $this->username,
-            'email' => $this->email,
+            'email' => $this->when($isOwner, $this->email),
             'avatar_path' => $this->avatar_path,
             'bio' => $this->bio,
             'library_entries_count' => $this->whenCounted('libraryEntries'),

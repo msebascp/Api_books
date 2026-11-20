@@ -25,7 +25,7 @@ class RegisterRequest extends FormRequest
             'username' => [
                 'required',
                 'string',
-                'max:255',
+                'max:50',
                 'regex:/^[A-Za-z0-9._-]+$/',
                 Rule::unique('users', 'username'),
             ],
@@ -37,7 +37,7 @@ class RegisterRequest extends FormRequest
                 Rule::unique('users', 'email'),
             ],
             'password' => ['required', 'string', Password::defaults()],
-            'bio' => ['nullable', 'string'],
+            'bio' => ['nullable', 'string', 'max:1000'],
             'avatar_path' => ['nullable', 'string', 'max:255'],
         ];
     }

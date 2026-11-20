@@ -121,11 +121,7 @@ class BookController extends Controller
 
     public function destroy(Book $book): JsonResponse
     {
-        DB::transaction(function () use ($book): void {
-            $book->authors()->detach();
-            $book->genres()->detach();
-            $book->delete();
-        });
+        $book->delete();
 
         return response()->json([
             'message' => 'Libro eliminado correctamente.',

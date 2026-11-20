@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\ReadingStatus;
 use App\Http\Requests\IndexLibraryEntryRequest;
 use App\Http\Requests\LibraryEntryRequest;
 use App\Http\Resources\LibraryEntryResource;
@@ -50,14 +51,23 @@ class LibraryEntryController extends Controller
         /** @var User $user */
         $user = $request->user();
         $validated = $request->validated();
+        $attributes = Arr::except($validated, ['book_id']);
 
-        $entry = LibraryEntry::updateOrCreate(
-            [
+        if (($attributes['status'] ?? null) === ReadingStatus::ToRead->value) {
+            $attributes['read_at'] = null;
+        }
+
+        $entry = $request->existingEntry();
+
+        if ($entry !== null) {
+            $entry->fill($attributes)->save();
+        } else {
+            $entry = LibraryEntry::create([
                 'user_id' => $user->id,
                 'book_id' => $validated['book_id'],
-            ],
-            Arr::except($validated, ['book_id'])
-        );
+                ...$attributes,
+            ]);
+        }
 
         $entry->load(['book.authors', 'book.genres', ...Book::reactionEagerLoads($user, 'book.')]);
 

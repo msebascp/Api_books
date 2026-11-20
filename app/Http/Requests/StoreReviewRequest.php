@@ -37,8 +37,8 @@ class StoreReviewRequest extends FormRequest
                 Rule::exists('books', 'id'),
                 Rule::unique('reviews', 'book_id')->where('user_id', $this->user()?->id),
             ],
-            'rating' => ['required', 'numeric', 'between:0.5,5.0'],
-            'content' => ['nullable', 'string'],
+            'rating' => ['required', 'numeric', 'between:0.5,5.0', 'multiple_of:0.5'],
+            'content' => ['nullable', 'string', 'max:10000'],
             'has_spoilers' => ['sometimes', 'boolean'],
         ];
     }

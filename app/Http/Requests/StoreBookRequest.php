@@ -23,6 +23,13 @@ class StoreBookRequest extends FormRequest
         if ($this->has('genre_ids') && ! $this->has('genres')) {
             $this->merge(['genres' => $this->input('genre_ids')]);
         }
+
+        $isbn = $this->input('isbn');
+
+        if (is_string($isbn)) {
+            $normalized = strtoupper((string) preg_replace('/[\s-]+/', '', $isbn));
+            $this->merge(['isbn' => $normalized !== '' ? $normalized : null]);
+        }
     }
 
     /**
@@ -32,9 +39,9 @@ class StoreBookRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:10000'],
             'cover_path' => ['nullable', 'string', 'max:255'],
-            'isbn' => ['nullable', 'string', 'max:255', Rule::unique('books', 'isbn')],
+            'isbn' => ['nullable', 'string', 'max:20', Rule::unique('books', 'isbn')],
             'publication_date' => ['nullable', 'date'],
             'pages' => ['nullable', 'integer', 'min:1', 'max:65535'],
             'authors' => ['sometimes', 'array'],

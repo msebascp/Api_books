@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
 
 class AuthorController extends Controller
 {
@@ -55,10 +54,7 @@ class AuthorController extends Controller
 
     public function destroy(Author $author): JsonResponse
     {
-        DB::transaction(function () use ($author): void {
-            $author->books()->detach();
-            $author->delete();
-        });
+        $author->delete();
 
         return response()->json([
             'message' => 'Autor eliminado correctamente.',

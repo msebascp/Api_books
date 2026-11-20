@@ -26,8 +26,6 @@ class Book extends Model
         'isbn',
         'publication_date',
         'pages',
-        'avg_rating',
-        'ratings_count',
     ];
 
     /**
@@ -65,6 +63,16 @@ class Book extends Model
     public function libraryEntries(): HasMany
     {
         return $this->hasMany(LibraryEntry::class);
+    }
+
+    /**
+     * @return BelongsToMany<User, $this>
+     */
+    public function readers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'library_entries')
+            ->withPivot(['status', 'is_owned', 'is_favorite', 'read_at'])
+            ->withTimestamps();
     }
 
     /**

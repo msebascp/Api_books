@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
 
 class GenreController extends Controller
 {
@@ -54,10 +53,7 @@ class GenreController extends Controller
 
     public function destroy(Genre $genre): JsonResponse
     {
-        DB::transaction(function () use ($genre): void {
-            $genre->books()->detach();
-            $genre->delete();
-        });
+        $genre->delete();
 
         return response()->json([
             'message' => 'Género eliminado correctamente.',

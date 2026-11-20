@@ -11,9 +11,11 @@ use App\Models\Book;
 use App\Models\Review;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 
 class ReviewController extends Controller
@@ -55,13 +57,19 @@ class ReviewController extends Controller
         $user = $request->user();
         $validated = $request->validated();
 
-        $review = Review::create([
-            'user_id' => $user->id,
-            'book_id' => $book->id,
-            'rating' => $validated['rating'],
-            'content' => $validated['content'] ?? null,
-            'has_spoilers' => $validated['has_spoilers'] ?? false,
-        ]);
+        try {
+            $review = Review::create([
+                'user_id' => $user->id,
+                'book_id' => $book->id,
+                'rating' => $validated['rating'],
+                'content' => $validated['content'] ?? null,
+                'has_spoilers' => $validated['has_spoilers'] ?? false,
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages([
+                'book_id' => ['Ya has publicado una reseña para este libro.'],
+            ]);
+        }
 
         $review->load('user')->loadCount(['likes', 'comments']);
 

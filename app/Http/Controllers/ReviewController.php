@@ -20,7 +20,9 @@ class ReviewController extends Controller
 {
     public function index(Request $request, ?Book $book = null): AnonymousResourceCollection
     {
-        $relations = $book !== null ? ['user'] : ['user', 'book'];
+        $relations = $book !== null
+            ? ['user']
+            : ['user', 'book', ...Book::reactionEagerLoads($this->viewer($request), 'book.')];
 
         $reviews = Review::query()
             ->with($relations)
@@ -35,9 +37,14 @@ class ReviewController extends Controller
         return ReviewResource::collection($reviews);
     }
 
-    public function show(Review $review): ReviewResource
+    public function show(Request $request, Review $review): ReviewResource
     {
-        $review->load(['user', 'book', 'comments.user'])->loadCount(['likes', 'comments']);
+        $review->load([
+            'user',
+            'book',
+            'comments.user',
+            ...Book::reactionEagerLoads($this->viewer($request), 'book.'),
+        ])->loadCount(['likes', 'comments']);
 
         return new ReviewResource($review);
     }

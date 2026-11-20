@@ -11,6 +11,7 @@ use App\Http\Resources\BookResource;
 use App\Models\Book;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,7 @@ class BookController extends Controller
         $validated = $request->validated();
 
         $query = Book::query()
-            ->with(['authors', 'genres'])
+            ->with(['authors', 'genres', ...Book::reactionEagerLoads($this->viewer($request))])
             ->withCount(['libraryEntries', 'reviews']);
 
         if (! empty($validated['search'])) {
@@ -69,9 +70,10 @@ class BookController extends Controller
         return BookResource::collection($query->paginate($perPage));
     }
 
-    public function show(Book $book): BookResource
+    public function show(Request $request, Book $book): BookResource
     {
-        $book->load(['authors', 'genres'])->loadCount(['libraryEntries', 'reviews']);
+        $book->load(['authors', 'genres', ...Book::reactionEagerLoads($this->viewer($request))])
+            ->loadCount(['libraryEntries', 'reviews']);
 
         return new BookResource($book);
     }
@@ -89,7 +91,8 @@ class BookController extends Controller
             return $book;
         });
 
-        $book->load(['authors', 'genres'])->loadCount(['libraryEntries', 'reviews']);
+        $book->load(['authors', 'genres', ...Book::reactionEagerLoads($this->viewer($request))])
+            ->loadCount(['libraryEntries', 'reviews']);
 
         return new BookResource($book);
     }
@@ -110,7 +113,8 @@ class BookController extends Controller
             }
         });
 
-        $book->load(['authors', 'genres'])->loadCount(['libraryEntries', 'reviews']);
+        $book->load(['authors', 'genres', ...Book::reactionEagerLoads($this->viewer($request))])
+            ->loadCount(['libraryEntries', 'reviews']);
 
         return new BookResource($book);
     }

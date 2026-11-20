@@ -82,6 +82,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<BookReaction, $this>
+     */
+    public function bookReactions(): HasMany
+    {
+        return $this->hasMany(BookReaction::class);
+    }
+
+    /**
      * @return HasMany<Comment, $this>
      */
     public function comments(): HasMany

@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\GenreRequest;
 use App\Http\Resources\GenreResource;
+use App\Models\Book;
 use App\Models\Genre;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -29,9 +30,10 @@ class GenreController extends Controller
         return GenreResource::collection($genres);
     }
 
-    public function show(Genre $genre): GenreResource
+    public function show(Request $request, Genre $genre): GenreResource
     {
-        $genre->load(['books.authors'])->loadCount('books');
+        $genre->load(['books.authors', ...Book::reactionEagerLoads($this->viewer($request), 'books.')])
+            ->loadCount('books');
 
         return new GenreResource($genre);
     }

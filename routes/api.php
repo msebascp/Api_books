@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\BookReactionController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\GenreController;
@@ -71,6 +72,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     // Social
     Route::post('/users/{user}/follow', [FollowController::class, 'toggleFollow'])->name('users.follow');
+
+    // Reacciones con emoji (estilo Trakt TV): PUT idempotente, reemplaza el set completo
+    Route::put('/books/{book}/reactions', [BookReactionController::class, 'sync'])->whereNumber('book')->name('books.reactions.sync');
 
     // Gestión de Catálogo (Rol Admin)
     Route::middleware('admin')->group(function (): void {

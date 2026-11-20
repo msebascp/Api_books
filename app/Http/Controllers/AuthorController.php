@@ -8,6 +8,7 @@ use App\Http\Requests\StoreAuthorRequest;
 use App\Http\Requests\UpdateAuthorRequest;
 use App\Http\Resources\AuthorResource;
 use App\Models\Author;
+use App\Models\Book;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,9 +31,10 @@ class AuthorController extends Controller
         return AuthorResource::collection($authors);
     }
 
-    public function show(Author $author): AuthorResource
+    public function show(Request $request, Author $author): AuthorResource
     {
-        $author->load(['books.genres'])->loadCount('books');
+        $author->load(['books.genres', ...Book::reactionEagerLoads($this->viewer($request), 'books.')])
+            ->loadCount('books');
 
         return new AuthorResource($author);
     }

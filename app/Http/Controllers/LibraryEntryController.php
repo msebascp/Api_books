@@ -24,7 +24,7 @@ class LibraryEntryController extends Controller
         $validated = $request->validated();
 
         $query = $user->libraryEntries()
-            ->with(['book.authors', 'book.genres']);
+            ->with(['book.authors', 'book.genres', ...Book::reactionEagerLoads($user, 'book.')]);
 
         if (isset($validated['status'])) {
             $query->where('status', $validated['status']);
@@ -59,7 +59,7 @@ class LibraryEntryController extends Controller
             Arr::except($validated, ['book_id'])
         );
 
-        $entry->load(['book.authors', 'book.genres']);
+        $entry->load(['book.authors', 'book.genres', ...Book::reactionEagerLoads($user, 'book.')]);
 
         return new LibraryEntryResource($entry);
     }

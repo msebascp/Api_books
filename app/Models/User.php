@@ -87,6 +87,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<BookList, $this>
+     */
+    public function bookLists(): HasMany
+    {
+        return $this->hasMany(BookList::class);
+    }
+
+    /**
      * @return HasMany<Review, $this>
      */
     public function reviews(): HasMany

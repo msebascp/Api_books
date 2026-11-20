@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\BookListController;
 use App\Http\Controllers\BookRatingController;
 use App\Http\Controllers\BookReactionController;
 use App\Http\Controllers\CommentController;
@@ -44,8 +45,12 @@ Route::get('/reviews/{review}/comments', [CommentController::class, 'index'])->w
 
 Route::get('/users/{username}', [UserController::class, 'show'])->name('users.show');
 Route::get('/users/{username}/reading-logs', [ReadingLogController::class, 'userIndex'])->name('users.reading-logs.index');
+Route::get('/users/{username}/lists', [BookListController::class, 'userLists'])->name('users.lists.index');
 Route::get('/users/{user}/followers', [FollowController::class, 'followers'])->name('users.followers');
 Route::get('/users/{user}/following', [FollowController::class, 'following'])->name('users.following');
+
+Route::get('/lists/{bookList}', [BookListController::class, 'show'])->whereNumber('bookList')->name('lists.show');
+Route::get('/lists/{bookList}/books', [BookListController::class, 'books'])->whereNumber('bookList')->name('lists.books.index');
 
 /*
 |--------------------------------------------------------------------------
@@ -68,6 +73,15 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/books/{book}/reading-logs', [ReadingLogController::class, 'store'])->whereNumber('book')->name('books.reading-logs.store');
     Route::put('/reading-logs/{readingLog}', [ReadingLogController::class, 'update'])->whereNumber('readingLog')->name('reading-logs.update');
     Route::delete('/reading-logs/{readingLog}', [ReadingLogController::class, 'destroy'])->whereNumber('readingLog')->name('reading-logs.destroy');
+
+    // Listas personalizadas de libros
+    Route::get('/lists', [BookListController::class, 'index'])->name('lists.index');
+    Route::post('/lists', [BookListController::class, 'store'])->name('lists.store');
+    Route::put('/lists/{bookList}', [BookListController::class, 'update'])->whereNumber('bookList')->name('lists.update');
+    Route::delete('/lists/{bookList}', [BookListController::class, 'destroy'])->whereNumber('bookList')->name('lists.destroy');
+    Route::post('/lists/{bookList}/books', [BookListController::class, 'addBook'])->whereNumber('bookList')->name('lists.books.store');
+    Route::put('/lists/{bookList}/books/reorder', [BookListController::class, 'reorder'])->whereNumber('bookList')->name('lists.books.reorder');
+    Route::delete('/lists/{bookList}/books/{book}', [BookListController::class, 'removeBook'])->whereNumber('bookList')->whereNumber('book')->withTrashed()->name('lists.books.destroy');
 
     // Interacciones sobre reseñas
     Route::post('/books/{book}/reviews', [ReviewController::class, 'store'])->whereNumber('book')->name('books.reviews.store');

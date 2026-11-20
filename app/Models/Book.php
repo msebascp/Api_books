@@ -86,6 +86,15 @@ class Book extends Model
     }
 
     /**
+     * @return BelongsToMany<BookList, $this>
+     */
+    public function bookLists(): BelongsToMany
+    {
+        return $this->belongsToMany(BookList::class, 'book_list_items')
+            ->withPivot(['position', 'created_at']);
+    }
+
+    /**
      * @return HasMany<Review, $this>
      */
     public function reviews(): HasMany

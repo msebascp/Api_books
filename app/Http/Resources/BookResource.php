@@ -39,6 +39,7 @@ class BookResource extends JsonResource
             'avg_rating' => (float) $this->avg_rating,
             'ratings_count' => (int) $this->ratings_count,
             'viewer_rating' => $this->viewerRatingValue(),
+            'list_position' => $this->whenPivotLoaded('book_list_items', fn (): int => (int) $this->pivot->position),
             'is_archived' => $this->trashed(),
             'library_entries_count' => $this->whenCounted('libraryEntries'),
             'reviews_count' => $this->whenCounted('reviews'),

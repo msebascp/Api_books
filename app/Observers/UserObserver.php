@@ -9,7 +9,7 @@ use App\Models\User;
 class UserObserver
 {
     /**
-     * IDs de libros con reseñas del usuario recopilados antes del borrado en cascada.
+     * IDs de libros puntuados por el usuario recopilados antes del borrado en cascada.
      *
      * @var array<int, list<int>>
      */
@@ -22,7 +22,8 @@ class UserObserver
     {
         $userId = (int) $user->getKey();
 
-        self::$affectedBookIdsByUser[$userId] = $user->reviews()
+        self::$affectedBookIdsByUser[$userId] = $user->libraryEntries()
+            ->whereNotNull('rating')
             ->pluck('book_id')
             ->map(static fn (mixed $bookId): int => (int) $bookId)
             ->unique()
@@ -44,7 +45,7 @@ class UserObserver
         unset(self::$affectedBookIdsByUser[$userId]);
 
         foreach ($bookIds as $bookId) {
-            ReviewObserver::recalculateForBookId($bookId);
+            LibraryEntryObserver::recalculateBookRating($bookId);
         }
     }
 }

@@ -208,10 +208,14 @@ class ApiEndpointsTest extends TestCase
         $otherUser = User::factory()->create();
         $book = Book::factory()->create();
 
-        // Create review
+        // Rate book and create written review
+        $this->actingAs($authorUser, 'sanctum')
+            ->putJson("/api/books/{$book->id}/rating", ['rating' => 4.5])
+            ->assertOk()
+            ->assertJsonPath('data.viewer_rating', 4.5);
+
         $reviewRes = $this->actingAs($authorUser, 'sanctum')
             ->postJson("/api/books/{$book->id}/reviews", [
-                'rating' => 4.5,
                 'content' => 'Obra maestra absoluta.',
                 'has_spoilers' => false,
             ])
@@ -223,7 +227,6 @@ class ApiEndpointsTest extends TestCase
         // Duplicate review by same user on same book fails FormRequest validation with 422
         $this->actingAs($authorUser, 'sanctum')
             ->postJson("/api/books/{$book->id}/reviews", [
-                'rating' => 3.0,
                 'content' => 'Intento duplicado.',
             ])
             ->assertUnprocessable()
@@ -231,7 +234,7 @@ class ApiEndpointsTest extends TestCase
 
         // Non-owner cannot update or delete review
         $this->actingAs($otherUser, 'sanctum')
-            ->putJson("/api/reviews/{$reviewId}", ['rating' => 1.0])
+            ->putJson("/api/reviews/{$reviewId}", ['content' => 'Intento intruso.'])
             ->assertForbidden();
 
         $this->actingAs($otherUser, 'sanctum')
@@ -240,9 +243,10 @@ class ApiEndpointsTest extends TestCase
 
         // Owner updates review
         $this->actingAs($authorUser, 'sanctum')
-            ->putJson("/api/reviews/{$reviewId}", ['rating' => 5.0, 'has_spoilers' => true])
+            ->putJson("/api/reviews/{$reviewId}", ['content' => 'Obra maestra revisada.', 'has_spoilers' => true])
             ->assertOk()
-            ->assertJsonPath('data.rating', 5)
+            ->assertJsonPath('data.content', 'Obra maestra revisada.')
+            ->assertJsonPath('data.rating', 4.5)
             ->assertJsonPath('data.has_spoilers', true);
 
         // Toggle like

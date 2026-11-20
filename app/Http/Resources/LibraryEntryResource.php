@@ -28,6 +28,7 @@ class LibraryEntryResource extends JsonResource
             'status' => $this->status instanceof ReadingStatus ? $this->status->value : $this->status,
             'is_owned' => (bool) $this->is_owned,
             'is_favorite' => (bool) $this->is_favorite,
+            'rating' => $this->rating !== null ? (float) $this->rating : null,
             'read_count' => (int) $this->read_count,
             'last_read_at' => $this->last_read_at?->format('Y-m-d'),
             'book' => new BookResource($this->whenLoaded('book')),

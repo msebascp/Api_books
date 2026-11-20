@@ -67,34 +67,34 @@ class PersistenceLayerTest extends TestCase
         ]);
     }
 
-    public function test_review_observer_recalculates_book_avg_rating_and_ratings_count(): void
+    public function test_library_entry_observer_recalculates_book_avg_rating_and_ratings_count(): void
     {
         $book = Book::factory()->create();
         $users = User::factory(3)->create();
 
-        $r1 = Review::factory()->create(['user_id' => $users[0]->id, 'book_id' => $book->id, 'rating' => 4.5]);
-        $r2 = Review::factory()->create(['user_id' => $users[1]->id, 'book_id' => $book->id, 'rating' => 5.0]);
-        $r3 = Review::factory()->create(['user_id' => $users[2]->id, 'book_id' => $book->id, 'rating' => 2.5]);
+        $e1 = LibraryEntry::factory()->create(['user_id' => $users[0]->id, 'book_id' => $book->id, 'rating' => 4.5]);
+        $e2 = LibraryEntry::factory()->create(['user_id' => $users[1]->id, 'book_id' => $book->id, 'rating' => 5.0]);
+        $e3 = LibraryEntry::factory()->create(['user_id' => $users[2]->id, 'book_id' => $book->id, 'rating' => 2.5]);
 
         $book->refresh();
         $this->assertSame(3, $book->ratings_count);
         $this->assertSame(4.0, $book->avg_rating);
 
         // Update rating
-        $r3->update(['rating' => 4.0]);
+        $e3->forceFill(['rating' => 4.0])->save();
         $book->refresh();
         $this->assertSame(3, $book->ratings_count);
         $this->assertSame(4.5, $book->avg_rating);
 
-        // Delete one review
-        $r1->delete();
+        // Delete one rated entry
+        $e1->delete();
         $book->refresh();
         $this->assertSame(2, $book->ratings_count);
         $this->assertSame(4.5, $book->avg_rating);
 
-        // Delete remaining reviews -> resets to 0 and 0.0
-        $r2->delete();
-        $r3->delete();
+        // Clear remaining ratings -> resets to 0 and 0.0
+        $e2->forceFill(['rating' => null])->save();
+        $e3->delete();
         $book->refresh();
         $this->assertSame(0, $book->ratings_count);
         $this->assertSame(0.0, $book->avg_rating);
@@ -129,7 +129,6 @@ class PersistenceLayerTest extends TestCase
         $review = Review::factory()->create([
             'user_id' => $alice->id,
             'book_id' => $book->id,
-            'rating' => 3.5,
         ]);
 
         $bob->likedReviews()->attach($review->id);

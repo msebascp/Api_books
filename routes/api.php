@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\BookRatingController;
 use App\Http\Controllers\BookReactionController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FollowController;
@@ -80,6 +81,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     // Social
     Route::post('/users/{user}/follow', [FollowController::class, 'toggleFollow'])->name('users.follow');
+
+    // Puntuación del libro (0.5 a 5.0 en pasos de 0.5; 0 o null elimina la puntuación)
+    Route::put('/books/{book}/rating', [BookRatingController::class, 'upsert'])->whereNumber('book')->name('books.rating.upsert');
 
     // Reacciones con emoji (estilo Trakt TV): PUT idempotente, reemplaza el set completo
     Route::put('/books/{book}/reactions', [BookReactionController::class, 'sync'])->whereNumber('book')->name('books.reactions.sync');

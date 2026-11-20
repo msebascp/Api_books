@@ -24,7 +24,6 @@ class ReviewFactory extends Factory
         return [
             'user_id' => User::factory(),
             'book_id' => Book::factory(),
-            'rating' => fake()->randomElement([0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]),
             'content' => fake()->paragraph(),
             'has_spoilers' => false,
         ];

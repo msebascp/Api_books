@@ -38,6 +38,7 @@ class BookResource extends JsonResource
             'pages' => $this->pages,
             'avg_rating' => (float) $this->avg_rating,
             'ratings_count' => (int) $this->ratings_count,
+            'viewer_rating' => $this->viewerRatingValue(),
             'is_archived' => $this->trashed(),
             'library_entries_count' => $this->whenCounted('libraryEntries'),
             'reviews_count' => $this->whenCounted('reviews'),
@@ -103,5 +104,25 @@ class BookResource extends JsonResource
             ->map(static fn (BookReaction $reaction): string => $reaction->reaction->value)
             ->values()
             ->all();
+    }
+
+    private function viewerRatingValue(): ?float
+    {
+        /** @var Book $book */
+        $book = $this->resource;
+
+        $viewer = Auth::guard('sanctum')->user();
+
+        if (! $viewer instanceof User) {
+            return null;
+        }
+
+        if (! $book->relationLoaded('viewerLibraryEntry')) {
+            $book->load(['viewerLibraryEntry' => Book::viewerLibraryEntryConstraint($viewer)]);
+        }
+
+        $rating = $book->viewerLibraryEntry?->rating;
+
+        return $rating !== null ? (float) $rating : null;
     }
 }

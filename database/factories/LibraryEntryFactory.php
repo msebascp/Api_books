@@ -32,6 +32,7 @@ class LibraryEntryFactory extends Factory
             'status' => $status,
             'is_owned' => fake()->boolean(30),
             'is_favorite' => fake()->boolean(20),
+            'rating' => null,
             'read_count' => $isRead ? 1 : 0,
             'last_read_at' => $isRead ? now()->toDateString() : null,
         ];

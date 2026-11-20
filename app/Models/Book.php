@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Book extends Model
@@ -72,7 +73,7 @@ class Book extends Model
     public function readers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'library_entries')
-            ->withPivot(['status', 'is_owned', 'is_favorite', 'read_count', 'last_read_at'])
+            ->withPivot(['status', 'is_owned', 'is_favorite', 'rating', 'read_count', 'last_read_at'])
             ->withTimestamps();
     }
 
@@ -132,8 +133,19 @@ class Book extends Model
     }
 
     /**
-     * Relaciones necesarias para serializar el bloque `reactions` del
-     * BookResource sin N+1. Admite un prefijo para precargas anidadas
+     * Entrada de biblioteca del usuario que realiza la petición (para viewer_rating).
+     * Debe precargarse siempre acotada al usuario (ver reactionEagerLoads()).
+     *
+     * @return HasOne<LibraryEntry, $this>
+     */
+    public function viewerLibraryEntry(): HasOne
+    {
+        return $this->hasOne(LibraryEntry::class);
+    }
+
+    /**
+     * Relaciones necesarias para serializar el bloque `reactions` y `viewer_rating`
+     * del BookResource sin N+1. Admite un prefijo para precargas anidadas
      * (p. ej. 'book.' desde LibraryEntry o Review).
      *
      * @return array<int|string, string|Closure>
@@ -144,6 +156,7 @@ class Book extends Model
 
         if ($viewer !== null) {
             $relations[$prefix.'viewerReactions'] = self::viewerReactionsConstraint($viewer);
+            $relations[$prefix.'viewerLibraryEntry'] = self::viewerLibraryEntryConstraint($viewer);
         }
 
         return $relations;
@@ -160,6 +173,19 @@ class Book extends Model
             $query->where('user_id', $viewer->getKey())
                 ->orderBy('created_at')
                 ->orderBy('reaction');
+        };
+    }
+
+    /**
+     * Restricción que acota viewerLibraryEntry al usuario indicado.
+     *
+     * @return Closure(HasOne<LibraryEntry, Book>): void
+     */
+    public static function viewerLibraryEntryConstraint(User $viewer): Closure
+    {
+        return static function (HasOne $query) use ($viewer): void {
+            $query->select(['id', 'user_id', 'book_id', 'rating'])
+                ->where('user_id', $viewer->getKey());
         };
     }
 }

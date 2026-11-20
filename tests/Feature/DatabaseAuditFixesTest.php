@@ -35,7 +35,6 @@ class DatabaseAuditFixesTest extends TestCase
         Review::factory()->create([
             'user_id' => $alice->id,
             'book_id' => $book->id,
-            'rating' => 4.5,
         ]);
 
         // Invitado anónimo: no ve el email en perfil público, seguidores ni feed de reseñas
@@ -85,11 +84,11 @@ class DatabaseAuditFixesTest extends TestCase
         $alice->createToken('test_device');
 
         // book1: Alice (5.0) y Bob (3.0) -> avg 4.00, count 2
-        Review::factory()->create(['user_id' => $alice->id, 'book_id' => $book1->id, 'rating' => 5.0]);
-        Review::factory()->create(['user_id' => $bob->id, 'book_id' => $book1->id, 'rating' => 3.0]);
+        LibraryEntry::factory()->create(['user_id' => $alice->id, 'book_id' => $book1->id, 'rating' => 5.0]);
+        LibraryEntry::factory()->create(['user_id' => $bob->id, 'book_id' => $book1->id, 'rating' => 3.0]);
 
         // book2: solo Alice (4.5) -> avg 4.50, count 1
-        Review::factory()->create(['user_id' => $alice->id, 'book_id' => $book2->id, 'rating' => 4.5]);
+        LibraryEntry::factory()->create(['user_id' => $alice->id, 'book_id' => $book2->id, 'rating' => 4.5]);
 
         $book1->refresh();
         $book2->refresh();
@@ -147,30 +146,28 @@ class DatabaseAuditFixesTest extends TestCase
         $this->assertSame('read', $reader->pivot->status);
     }
 
-    public function test_review_rating_must_be_multiple_of_half_point(): void
+    public function test_book_rating_must_be_multiple_of_half_point(): void
     {
         $user = User::factory()->create();
         $book = Book::factory()->create();
         Sanctum::actingAs($user);
 
         // 4.37 no es múltiplo de 0.5 -> 422
-        $this->postJson("/api/books/{$book->id}/reviews", [
+        $this->putJson("/api/books/{$book->id}/rating", [
             'rating' => 4.37,
-            'content' => 'Decimal arbitrario.',
         ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['rating']);
 
-        // 4.5 sí es múltiplo de 0.5 -> 201
-        $reviewRes = $this->postJson("/api/books/{$book->id}/reviews", [
+        // 4.5 sí es múltiplo de 0.5 -> 200
+        $this->putJson("/api/books/{$book->id}/rating", [
             'rating' => 4.5,
-            'content' => 'Múltiplo válido.',
-        ])->assertCreated();
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.viewer_rating', 4.5);
 
-        $reviewId = (int) $reviewRes->json('data.id');
-
-        // En actualización también rechaza valores que no sean múltiplos de 0.5
-        $this->putJson("/api/reviews/{$reviewId}", [
+        // En actualización posterior también rechaza valores que no sean múltiplos de 0.5
+        $this->putJson("/api/books/{$book->id}/rating", [
             'rating' => 3.2,
         ])
             ->assertUnprocessable()

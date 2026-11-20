@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Observers\ReviewObserver;
 use Closure;
 use Database\Factories\ReviewFactory;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[ObservedBy(ReviewObserver::class)]
 class Review extends Model
 {
     /** @use HasFactory<ReviewFactory> */
@@ -27,7 +24,6 @@ class Review extends Model
     protected $fillable = [
         'user_id',
         'book_id',
-        'rating',
         'content',
         'has_spoilers',
     ];
@@ -38,7 +34,6 @@ class Review extends Model
     protected function casts(): array
     {
         return [
-            'rating' => 'float',
             'has_spoilers' => 'boolean',
         ];
     }
@@ -74,6 +69,39 @@ class Review extends Model
     {
         return $this->belongsToMany(User::class, 'review_likes', 'review_id', 'user_id')
             ->withPivot('created_at');
+    }
+
+    /**
+     * Añade mediante subconsulta escalar la puntuación (`reviewer_rating`) que
+     * el autor de la reseña otorgó al libro en `library_entries` sin N+1.
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeWithReviewerRating(Builder $query): Builder
+    {
+        return $query->addSelect([
+            'reviewer_rating' => LibraryEntry::query()
+                ->select('rating')
+                ->whereColumn('library_entries.user_id', 'reviews.user_id')
+                ->whereColumn('library_entries.book_id', 'reviews.book_id')
+                ->limit(1),
+        ]);
+    }
+
+    /**
+     * Carga la puntuación del autor de la reseña en una instancia ya hidratada.
+     */
+    public function loadReviewerRating(): self
+    {
+        $rating = LibraryEntry::query()
+            ->where('user_id', $this->user_id)
+            ->where('book_id', $this->book_id)
+            ->value('rating');
+
+        $this->setAttribute('reviewer_rating', $rating !== null ? (float) $rating : null);
+
+        return $this;
     }
 
     /**

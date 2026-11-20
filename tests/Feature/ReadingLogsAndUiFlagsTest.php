@@ -199,7 +199,6 @@ class ReadingLogsAndUiFlagsTest extends TestCase
         ])->assertCreated();
 
         $this->postJson("/api/books/{$book->id}/reviews", [
-            'rating' => 5.0,
             'content' => 'Inolvidable.',
         ])->assertCreated();
 
@@ -249,7 +248,7 @@ class ReadingLogsAndUiFlagsTest extends TestCase
             ->assertJsonPath('data.is_archived', false);
     }
 
-    public function test_viewer_flags_and_has_content_review_filter_work_without_n_plus_one(): void
+    public function test_viewer_flags_work_without_n_plus_one(): void
     {
         [$alice, $bob, $carol] = User::factory()->count(3)->create()->all();
         $book1 = Book::factory()->create();
@@ -258,45 +257,33 @@ class ReadingLogsAndUiFlagsTest extends TestCase
         // Alice sigue a Bob (pero no a Carol)
         $alice->following()->attach($bob->id);
 
-        // Reseña con texto de Bob y calificación solo con estrellas (sin texto) de Carol
-        $writtenReview = Review::factory()->create([
+        $bobReview = Review::factory()->create([
             'user_id' => $bob->id,
             'book_id' => $book1->id,
-            'rating' => 4.5,
             'content' => 'Excelente desarrollo de personajes.',
         ]);
 
-        $ratingOnlyReview = Review::factory()->create([
+        Review::factory()->create([
             'user_id' => $carol->id,
             'book_id' => $book2->id,
-            'rating' => 3.5,
-            'content' => null,
+            'content' => 'Muy entretenido.',
         ]);
 
         // Alice le da like a la reseña de Bob
-        $alice->likedReviews()->attach($writtenReview->id);
+        $alice->likedReviews()->attach($bobReview->id);
 
-        // Invitado: liked_by_viewer y followed_by_viewer son siempre false; ?has_content=1 filtra solo reseñas con texto
-        $this->getJson('/api/reviews?has_content=1')
+        // Invitado: liked_by_viewer y followed_by_viewer son siempre false
+        $this->getJson("/api/books/{$book1->id}/reviews")
             ->assertOk()
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.id', $writtenReview->id)
+            ->assertJsonPath('data.0.id', $bobReview->id)
             ->assertJsonPath('data.0.liked_by_viewer', false)
             ->assertJsonPath('data.0.user.followed_by_viewer', false);
-
-        $this->getJson('/api/reviews?has_content=0')
-            ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.id', $ratingOnlyReview->id);
 
         // Autenticada como Alice: ve liked_by_viewer = true y followed_by_viewer = true en Bob, false en sí misma
         Sanctum::actingAs($alice);
 
-        $this->getJson('/api/reviews')
-            ->assertOk()
-            ->assertJsonCount(2, 'data');
-
-        $this->getJson('/api/reviews?has_content=1')
+        $this->getJson("/api/books/{$book1->id}/reviews")
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.liked_by_viewer', true)
@@ -318,7 +305,7 @@ class ReadingLogsAndUiFlagsTest extends TestCase
         $queriesForReviews = function (int $extraReviews) use ($alice): int {
             $books = Book::factory()->count($extraReviews)->create();
             foreach ($books as $b) {
-                $r = Review::factory()->create(['book_id' => $b->id, 'rating' => 4.0]);
+                $r = Review::factory()->create(['book_id' => $b->id]);
                 $alice->likedReviews()->attach($r->id);
             }
 

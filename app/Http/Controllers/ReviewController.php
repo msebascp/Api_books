@@ -33,6 +33,7 @@ class ReviewController extends Controller
             : [...$userRelation, 'book', ...Book::reactionEagerLoads($viewer, 'book.')];
 
         $query = Review::query()
+            ->withReviewerRating()
             ->with($relations)
             ->withCount(['likes', 'comments'])
             ->when(
@@ -42,16 +43,6 @@ class ReviewController extends Controller
 
         if ($viewer !== null) {
             $query->withExists(Review::viewerLikeExistsConstraint($viewer));
-        }
-
-        if ($request->has('has_content')) {
-            if ($request->boolean('has_content')) {
-                $query->whereNotNull('content')->where('content', '<>', '');
-            } else {
-                $query->where(function (Builder $q): void {
-                    $q->whereNull('content')->orWhere('content', '');
-                });
-            }
         }
 
         $reviews = $query
@@ -83,6 +74,8 @@ class ReviewController extends Controller
             ])->loadCount(['likes', 'comments']);
         }
 
+        $review->loadReviewerRating();
+
         return new ReviewResource($review);
     }
 
@@ -96,8 +89,7 @@ class ReviewController extends Controller
             $review = Review::create([
                 'user_id' => $user->id,
                 'book_id' => $book->id,
-                'rating' => $validated['rating'],
-                'content' => $validated['content'] ?? null,
+                'content' => (string) $validated['content'],
                 'has_spoilers' => $validated['has_spoilers'] ?? false,
             ]);
         } catch (UniqueConstraintViolationException) {
@@ -109,6 +101,7 @@ class ReviewController extends Controller
         $review->setRelation('user', $user);
         $review->setAttribute('liked_by_viewer', false);
         $review->loadCount(['likes', 'comments']);
+        $review->loadReviewerRating();
 
         return new ReviewResource($review);
     }
@@ -122,6 +115,7 @@ class ReviewController extends Controller
         $review->setRelation('user', $user);
         $review->loadCount(['likes', 'comments'])
             ->loadExists(Review::viewerLikeExistsConstraint($user));
+        $review->loadReviewerRating();
 
         return new ReviewResource($review);
     }
@@ -153,6 +147,7 @@ class ReviewController extends Controller
             'user' => static fn ($q) => $q->withExists(User::viewerFollowExistsConstraint($user)),
         ])->loadCount(['likes', 'comments']);
         $review->setAttribute('liked_by_viewer', $liked);
+        $review->loadReviewerRating();
 
         return (new ReviewResource($review))->additional([
             'liked' => $liked,

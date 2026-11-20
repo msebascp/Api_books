@@ -24,7 +24,12 @@ class LibraryEntryController extends Controller
         $validated = $request->validated();
 
         $query = $user->libraryEntries()
-            ->with(['book.authors', 'book.genres', ...Book::reactionEagerLoads($user, 'book.')]);
+            ->with([
+                'book.authors',
+                'book.genres',
+                'book.reactionCounts',
+                'book.viewerReactions' => Book::viewerReactionsConstraint($user),
+            ]);
 
         if (isset($validated['status'])) {
             $query->where('status', $validated['status']);
@@ -47,10 +52,13 @@ class LibraryEntryController extends Controller
         }
 
         $perPage = (int) ($validated['per_page'] ?? 15);
+        $paginator = $query->latest('updated_at')->paginate($perPage);
 
-        return LibraryEntryResource::collection(
-            $query->latest('updated_at')->paginate($perPage)
-        );
+        foreach ($paginator->getCollection() as $entry) {
+            $entry->book?->setRelation('viewerLibraryEntry', $entry);
+        }
+
+        return LibraryEntryResource::collection($paginator);
     }
 
     public function storeOrUpdate(LibraryEntryRequest $request): LibraryEntryResource
@@ -72,7 +80,13 @@ class LibraryEntryController extends Controller
             ]);
         }
 
-        $entry->load(['book.authors', 'book.genres', ...Book::reactionEagerLoads($user, 'book.')]);
+        $entry->load([
+            'book.authors',
+            'book.genres',
+            'book.reactionCounts',
+            'book.viewerReactions' => Book::viewerReactionsConstraint($user),
+        ]);
+        $entry->book?->setRelation('viewerLibraryEntry', $entry);
 
         return new LibraryEntryResource($entry);
     }

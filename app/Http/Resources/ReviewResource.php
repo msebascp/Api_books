@@ -32,11 +32,17 @@ class ReviewResource extends JsonResource
             $likedByViewer = (bool) $this->resource->getAttribute('liked_by_viewer');
         }
 
+        if (! array_key_exists('reviewer_rating', $this->resource->getAttributes())) {
+            $this->resource->loadReviewerRating();
+        }
+
+        $rawRating = $this->resource->getAttribute('reviewer_rating');
+
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
             'book_id' => $this->book_id,
-            'rating' => (float) $this->rating,
+            'rating' => $rawRating !== null ? (float) $rawRating : null,
             'content' => $this->content,
             'has_spoilers' => (bool) $this->has_spoilers,
             'liked_by_viewer' => $likedByViewer,

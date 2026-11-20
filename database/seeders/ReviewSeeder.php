@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\LibraryEntry;
 use App\Models\Review;
 use Illuminate\Database\Seeder;
 
@@ -39,6 +40,18 @@ class ReviewSeeder extends Seeder
         ];
 
         foreach ($reviews as $reviewData) {
+            $rating = $reviewData['rating'];
+            unset($reviewData['rating']);
+
+            $entry = LibraryEntry::query()
+                ->where('user_id', $reviewData['user_id'])
+                ->where('book_id', $reviewData['book_id'])
+                ->first();
+
+            if ($entry !== null) {
+                $entry->forceFill(['rating' => $rating])->save();
+            }
+
             Review::create($reviewData);
         }
     }
